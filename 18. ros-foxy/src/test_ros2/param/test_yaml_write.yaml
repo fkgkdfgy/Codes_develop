@@ -1,0 +1,14 @@
+Person1:
+  name: LWL
+  height: 174.5
+  age: 24
+Sequence_test: [xxxx, bbb, cccc]
+Test_makeup:
+  Person1:
+    name: LWL
+    height: 174.5
+    age: 24
+  Person2:
+    name: LWL
+    height: 174.5
+    age: 24

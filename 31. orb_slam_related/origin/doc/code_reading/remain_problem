@@ -1,0 +1,76 @@
+ORBSLAM 大改进：
+1. MapPointCulling + CreateNewMapPoint + Fuse 的方式态粗暴了 可以改成SVO/DSO 的收敛的方式
+   1.1 现在看的话主要就是MapPointCulling 方面的改善
+   CreateNewMapPoint 生成MapPoint 的方式 感觉会存在一些重复的情况感觉这样效果并不好？ 存疑
+   2020.12.16 添加
+   目前，还是感觉这样重复的添加是存在一些问题的，之后我们再来深入研究。
+2. KeyFrame 可以改成 BASALT 的方式 
+   对应的就是KeyFrameCulling 的问题
+3. AdaptiveFastTH 完成
+4. LocalMapping 的方式相对来说好像并没有对深度信息进行迭代优化，只是在LocalBA的时候一起进行混合的优化。
+                而初始值还是使用了三角化得来的结果
+5. Graph Culling
+6. 线面特征的形式   完成
+7. 高速跟踪存在问题  想办法光流解决一下  1 完成 
+8. ORB说到底还是一个LocalBA
+
+
+
+ORBSLAM 小改进:
+1. 加一个PoseTree，这样的话能够更好的更新共视关系
+
+
+
+现存问题：
+1. 为什么加入MonoError精度没有明显的提高？
+2. 为什么Stereo的Pose Optmization 里面会有Mono 的约束？
+   而且加上Mono 之后算法精度并并没有很大的提高(这一点有待商榷，可以是因为我对于代码修改的问题，需要之后进行测试)
+3. 加上GroundConstraint 之后，整个效果存在很大的问题   已经解决
+
+
+
+ORB大修计划
+1. 实时性和旋转稳定性的耦合    完成
+   解决跟丢的问题
+   |__ 现在ORB挂掉的原因是什么?
+       |__ 内部参数设置的原因? (TrackLocalMap 门槛过于严格) 完成
+           改完之后稳定性有明显的提升 精度目前不可知  
+           |__ TrackingIPC 完成
+           |__ OpenCV 图像显示 基础搭建 
+           |__ rosbag 提取图像 rosbag 可以step forward 所以这个先不用
+       |__ 处理速度不足,导致出现大范围未知区域?    
+           目前发现也存在这个问题, 匹配小于20个点,有时会有100 和 90 ms 的帧出现
+           |__ 100 和 90 是不是关键帧? 
+               -> 这个时候是不是可以一个光流解决一下
+               -> 做一次Tracker 的内部统计
+       |__ 高速情况下的运动模糊?   完成
+           并不是这个原因,更多的原因是算力不足导致的丢帧导致的 
+           的确存在这种情况,但是ORB还是有一定的适应
+           通过在hardest 数据集上的测试来看. 
+           实际上ORB 的如果时间充足的话,稳定性还是有保证的. 
+           调低最小追踪Inliers 之后 step 模式基本不断. 但是会存在跳变的情况
+           新猜想: 是不是可以通过高一个层级的金字塔进行匹配??
+   |__ 是不是光流跟踪参考VINS BASALT会更加稳定?
+       目前看来,受制于ORB的计算耗时的丢帧情况
+       可能还是要换成光流,然后想办法做一个好的光流
+2. 内存的问题
+
+
+遗留问题：
+1. 什么时候MapPoint会被replace  完成
+   LocalMapping 调用 ORBmatcher:: Fuse 的地方
+2. ORBMatcher 的算法实现      
+   |__ Projection的匹配     完成
+   |__ 词袋的匹配      
+3. ORBOptimizer g2o 实现方式还没有进行学习 完成
+   |__ LocalBA
+   |__ GlobalBA
+   |__ EssentialGraph
+   |__ 树的结构
+4. 词袋的实现方式 源码还没有进行阅读    
+5. KeyFrame Frame MapPoint的存活流程  KeyFrame 自身及其变量跟踪
+   最主要的是 F KF MapPoint mvpMapPoint child parent 1 
+6. ORB 的大量改版没有进行阅读 非常可惜
+7. 一些基础算法的实现 非常可惜
+8. 没有跟一下数据流    完成
+9. ORB 大量的MapPoint 累计之后会让系统变得很慢 

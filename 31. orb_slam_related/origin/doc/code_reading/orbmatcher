@@ -1,0 +1,10 @@
+ORBMatcher 多种匹配的方法类
+    |__ mfSearchForTriangulation() 利用基础矩阵约束，来进行特征匹配
+    |__ mfSearchByProjection1()    F 和 F 之间的匹配，采用先用速度预估范围，之后使用描述子精匹配的方式进行 在trackMotion中使用
+    |__ mfSearchByProjection2()    F 和 KF 之间的匹配　与　Ｆ　和Ｆ　匹配差不多 在TrackKF中使用
+    |__ mfSearchByProjection3()    F 和 vMP 之间的匹配，在TrackLocalMap中调用。               这三个匹配都会添加和更新F 的MapPoint
+                                   但是这里仅仅是添加到CurrentFrame 的mvMapPoint 列表
+                                   并没有对MapPoint的observeration 进行添加
+                                   这样和LocalMap 的 ProcessNewKeyFrame() 中关于observation 判断串联了起来
+    |__ mfFuse()                   F 和 vMP 之间，将观测次数小的bMP或者 F.mvMP替换掉   
+

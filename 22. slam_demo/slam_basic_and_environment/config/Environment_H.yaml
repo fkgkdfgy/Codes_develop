@@ -1,0 +1,11 @@
+%YAML:1.0
+---
+Environment.Xmin: 3.0
+Environment.Ymin: 0.0
+Environment.Zmin: 0.0
+Environment.Xscale: 0.0
+Environment.Yscale: 10.0
+Environment.Zscale: 10.0
+Environment.Xinterval: 0.5
+Environment.Yinterval: 0.5
+Environment.Zinterval: 0.5

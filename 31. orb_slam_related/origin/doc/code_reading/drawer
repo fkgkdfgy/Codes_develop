@@ -1,0 +1,15 @@
+分成 MapDrawer 和 FrameDrawer
+
+FrameDrawer
+    |__ 重要member var记述
+        |__ mvIniKeys       参考帧中的特征点
+        |__ mvCurrentKeys   当前帧中的特征点
+        |__ mvIniMatches    当前帧特征点和参考帧特征点的匹配关系
+        |__ mpMap           地图指针
+        |__ mvbVO           vector 容量为N 当前帧提取的特征点数量 如果是新提取出来的点 那么就是true
+        |__ mvbMap          vector 容量为N 当前帧提取的特征点数量 如果是地图中的点 那么就是true
+    |__ ctor()              没有太多工作就只是做一些初始化的工作
+    |__ Update()            将跟踪线程的数据拷贝到绘图线程
+                            （图像、特征点、地图、跟踪状态）
+    |__ DrawFrame()         用opencv 显示一个帧  小方框就是在这里显示
+    |__ DrawTextInfo()      在文件上面显示文字 就是MP： KF：之类的

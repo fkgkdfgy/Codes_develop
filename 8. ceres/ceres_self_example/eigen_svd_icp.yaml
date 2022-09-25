@@ -1,0 +1,5 @@
+max_iter: 30
+max_dist: 1.2
+euclidean_eps: 0.001
+euclidean_change: 0.01
+trans_eps: 0.01

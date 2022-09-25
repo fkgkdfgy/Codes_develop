@@ -1,0 +1,19 @@
+来自：https://zhuanlan.zhihu.com/p/187291001
+
+Active SLAM (主要看如何评价回环)
+    |__ 多机器人协作的主动SLAM，找pose graph中的弱连接来规划最优路径。
+        ->
+        Broadcast your weaknesses: cooperative active pose-graph SLAM for multiple robots
+    |__ 提出一种探索策略，在决定机器人下一步去向时既考虑获得最多新信息的观测位置，又考虑获得最佳回环的观测位置。实验用于水下机器人声呐建图。
+        ->
+        Active SLAM using 3D Submap Saliency for Underwater Volumetric Exploration
+    
+Laser SLAM 
+    |__ 基于NDT地图的2D laser SLAM，比occupancy版本的baseline（Cartographer）精度和速度都更好一些。
+        Real-Time Graph-Based SLAM with Occupancy Normal Distributions Transforms
+    |__ 关注建图和全局位姿优化，不涉及前端。固定N帧建一个submap（每帧的odom都存着，因为LCD不一定给哪一帧的结果），
+        重合度高的submap之间做registration，得到除了odom和loop closure之外的第三类pose约束，共同做pose graph优化。
+        submap用TSDF，融合后输出ESDF全局地图。
+        重点在于registration没有用ICP而是correspondence-free alignment，类似于直接优化。 和Cartorgapher 一样？？
+        ->
+        Voxgraph: Globally Consistent, Volumetric Mapping using Signed Distance Function Submaps

@@ -1,0 +1,32 @@
+目前看来 gtsam 里面的IMU Factor 主要是包括了下面五个部分
+PreintegratedImuMeasurements
+PreintegrationType
+PreintegrationParams
+ConstantBias         完成
+IMUFactor
+今晚读完这五个部分
+
+ConstantBias     存储Bias 信息 accel gyro 都是
+    |__ vector()    得到accel 和 gyro 的集合bias
+    |__ correctAccelerometer()    使用这个bias组合对accel 和gyro
+                                  的测量进行纠正
+    |__ correctGyroscope()
+
+PreintegrationParams
+    |__ 
+
+TangentPreintegration        预积分二级基类
+    |__ 重要member var 记述
+        |__ preintegrated_              9 维 RPV
+        |__ preintegrated_H_biasAcc_    估计是JRa JPa JPa
+        |__ preintegrated_H_biasOmega_       JRg JPg JPg
+    |__ integrateMeasurement()          函数主体
+        |__ update()    
+            |__ correctAccelGyro()
+            |__ correctMeasurementsBySensorPose()
+            |__           
+PreintegrationBase           预积分一级基类
+    |__ 重要member var 记述
+        |__ shared_ptr<Params>    保存了一些参数
+        |__ ConstantBias          IMU Bias
+    |__ correctMeasurementsBySensorPose

@@ -1,0 +1,47 @@
+Scan Context 理论流程
+1. 
+
+
+
+Scan Context 代码阅读
+
+SCmanager
+    |__ 重要member var 记述
+        |__ polarcontexts_timestamp_          时间序列
+        |__ polarcontexts_                    内部存储的是 ring * sector 类型的信息
+                                              0-PC_NUM_RING 行数 0 到 PC_NUM_RING 的从远到近
+        |__ polarcontext_invkeys_             保存 ring * 1 类型的vector
+        |__ polarcontext_vkeys_               保存 1 * sector 类型的 vector
+        |__ polarcontext_invkeys_mat_         保存 ring * 1 (被转换到 vector<float>) 的vector
+        |__ polarcontext_tree_                一个适应了vector 的 kdtree  一个ring 维的kdtree
+    |__ makeAndSaveScancontextAndKeys( point_cloud)
+        |__ makeScancontext()                 从点云信息生成到 ring * sector 信息
+            |__ for_each point:point_cloud 
+                |__ seperateRingAndSector     单个sector中的最高点云 
+        |__ makeRingkeyFromScancontext()      从 ring * sector 生成 ring * 1 的信息
+                                              生成的是mean的信息
+        |__ makeSectorkeyFromScancontext()    从 ring * sector 生成 1 * sector 的信息 
+                                              生成的是mean的信息
+        |__ storeInfo()
+    |__ detectLoopClosureID()                  
+        |__ checkRecently()                                      如果帧太少就不进行Loop 查找了
+        |__ if(condition):buildKdtree()
+        |__ findKnn()                                            实际上是对 ring * 1 进行kdtree
+        |__ for_each Knn
+            |__ distanceBtnScanContext( MatrixXd , MatrixXd)
+                |__ makeSectorkeyFromScancontext()               从 ring * sector 生成 1 * sector 的信息 
+                                                                 生成的是mean的信息
+                |__ fastAlignUsingVkey()                         寻找 argmin_vkey_shift
+                |__ buildCandidateAroundArgminVkeyShift()        之前是一维搜索 现在改成二维搜索
+                |__ for_each Candidates
+                    |__ distDirectSC()             评价得分  
+        |__ loopThresholdCheck()
+
+
+和 LeGo-LOAM 结合的内容
+
+performLoopClosure()
+    |__ detectLoopClosure()  更新RSclosestHistoryFrameID 
+                             和submap 点云
+    |__ ICPRegistration
+    |__ if(checkFitnessCore):addIntoISAM()

@@ -1,0 +1,34 @@
+主要目的：
+1. 学一手 NEON
+2. 学习一下前端
+
+==================== DETECTOR ========================
+
+gridFASTdetector
+    |__ 重要member var 记述
+        |__ nFeatures           特征最大数量
+        |__ threshold           FAST 阈值
+        |__ grid                一个格子(Cell FAST 检测的单元)的大小
+    |__ mfsetMaxFeatures()
+    |__ mfsetThreshold()
+    |__ mfsetGridSize()
+    |__ mfdetect(image)->vPoint2f     主体函数输入图像，输出角点
+
+keepStrongest(N) 留下Response 最大的N个点
+
+opencv内部并行类
+GridAdaptedFeatureDetectorInvoker：public cv::ParallelLoopBody
+    |__ operator() 内部调用
+        |__ 会对image分格子进行 FAST9 NEON提取，并且每个格子保证一定量的点
+
+==================== TRACKER ============================
+
+tracker
+    |__ 重要member var 
+        |__ winSize         好像是用于做高斯的模糊的大小
+    |__ track(img1,img2) -> vPoint2f ps1,vPoint2f ps2
+        |__ calc_OpticalFlowPyrLK()    LK 光流
+
+具体内容：需要看一下neon之后 继续来看。
+
+==================== GRIC =================================

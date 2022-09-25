@@ -1,0 +1,40 @@
+
+PNPSimulation.h
+    |__ sampleGauss 生成 vector 的高斯噪声
+    |__ oneSampleGauss 生成单个高斯噪声
+        |__ 以上噪声生成都是使用g2o的API
+    |__ sampleUniformMeans 生成均衡噪声
+        |__ 以上噪声使用boost 生成
+    |__ PNPSimulation 主体类 
+        一个SE3 和一个Matrix22d var 分布 进行初始化
+    |__ Camera 类 包含相机内参
+        |__ project() 3d点 -> 像素
+        |__ backProject() 像素 -> 3d点
+
+PNPSimulation.cpp
+    |__ reprojectErr Analystic Method 定义问题
+        |__ ctor() 添加数值，对var分布进行LLT操作
+            这里是因为ceres 都是在按照最小二乘的方式来进行计算，所以没有办法必须要加上这一步
+        |__ Evaluate() virtual CostFunction 的内容
+            |__ 小细节点 参数(变量)从parameters 进入
+                        返回 residual 和 Jacobian 
+                        因为 ceres 构造都是 x^2 形式
+                        所以 Covariance 需要拆成LLT 的形式乘到 residual 和 Jacobian 当中
+            |__ 小细节点 jacobians 的指针是连续内存？ 
+                        也就是说 jacobians[0]的末尾和
+                        jacobians[1]的开头是连接在一起的？
+    |__ SE3Parameterization: LocalParameterization 用于纠正一些流形计算
+        |__ Plus 用于纠正加法这里也就是 SE3上面的左右乘计算
+        |__ ComputeJacobian 用于计算delta at delta =0
+            这里直接返回了一个 6×6 的单位矩阵 而且是一个 ceres::MatrixRef == Eigen::Map<Matrix<T,N1,N2>>
+            结论 这里的处理比较简单，结合Sophus 的求导功能可以直接进行计算 
+                但是问题是现在看来那个Sophus 的版本 使用四元数+XYZ 进行表示 所以Jacobian 是一个 7×6 的矩阵
+    |__ PNPSimulation 函数定义
+        |__ start 算法入口
+            |__ sampleUniformMeans 生成正确的3d点
+            |__ 生成含噪声的像素数值
+            |__ 生成Problem 进行求解
+                |__ 小细节点 
+                    Problem::SetParameterization 用于存放 LocalParameterization
+                |__ Jacobian 也乘了一个 sqrt_information_
+

@@ -1,0 +1,11 @@
+Tracker 跑在System的主线程中
+    |__ ctor()  
+    |__ GrabImuData()               只是把Imu信息保存起来
+    |__ GrabImageMonocular()        处理图像数据
+        |__ call Frame::ctor() 
+    |__ Track()                     Tracking 主体函数
+        |__ PreintegrateIMU()       前后插值中间中值积分
+        |__ MonocularInitialization()
+
+Frame
+    |__ ctor()                      在这里提取特征点

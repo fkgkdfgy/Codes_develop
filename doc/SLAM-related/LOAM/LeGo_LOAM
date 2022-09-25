@@ -1,0 +1,209 @@
+LeGO-LOAM 还有细节上的阅读没有进行完有些可惜
+
+FeatureAssociation              给去畸变的点云进行特征提取和Odom 匹配
+    |__ 输入
+        |__ segmentedCloud
+        |__ imu
+        |__ segMsg
+        |__ outlierCloud
+    |__ 输出
+	    |__ CornerPointsSharp
+	    |__ CornerPointsLessSharp
+	    |__ SurPointFlat
+	    |__ SurPointLessFlat
+            |__ LaserCloudCornerLast
+            |__ LaserCloudSurLast
+            |__ OutlierCloud
+        |__ LaserOdometry
+    |__ 重点member 记述
+        |__ imu 相关
+            |__ imu信息队列 200个
+                |__ imuTime                   都是世界坐标系下
+                |__ imuRoll/Pitch/Yaw
+                |__ imuAccX/Y/Z
+                |__ imuVeloX/Y/Z
+                |__ imuShiftX/Y/Z
+                |__ imuAngularVeloX/Y/Z
+                |__ imuAngularRotationX/Y/Z
+        |__ cloud 相关
+            |__ cloudNeighborPicked   用于甄别堵塞点 1 堵塞+不再选择的点 
+                                                   0 未堵塞
+            |__ pointSearchSurfInd1/2/3  保存面匹配 source 3点的index
+            |__ laserCloudSurfLast 保存的是surfPointsLessFlat
+            |__ laserCloudCornerLast 保存的是cornerPointsLessSharp
+        |__ transfrom 相关
+            |__ imuVeloX/Y/ZCur           Cur 来自imu的状态递推 在adjustDistortion外 代表一个sweep 最后一个点的信息
+            |__ imuRoll/Pitch/YawCur
+            |__ imuShiftX/Y/ZCur    
+            |__ imuVeloX/Y/ZStart         代表Start上的值 一个sweep 第一个点作为初始坐标
+            |__ imuRoll/Pitch/YawStart  
+            |__ imuShiftX/Y/ZStart  
+            |__ imuAngularFromStartX/Y/Z  两个sweep 之间 旋转过的角度
+            |__ imuShiftFromStartX/Y/Z    
+            |__ imuVeloFromStartX/Y/Z     
+            |__ transformCur              当前sweep 的第一个坐标点作为坐标系 来衡量过去odo 的坐标系
+            |__ transformSum              就是很迷？？？                                             
+    |__ initializationValue()
+    |__ ToolFunction
+        |__ publishCloud()
+        |__ TransformToStart()
+        |__ TransformToEnd()
+        |__ PluginIMURotation()
+        |__ updateImuRollPitchYawStartSinCos() 就是角度+cos sin 加上的值会有cos/sin 前缀
+        |__ AccumulateIMUShiftAndRotation()        用Acc 和角速度更新累加imu数据
+            |__ transfromAccIntoWorldFrame()
+            |__ estimateNewShift/Velo/AngleRotation()
+        |__ ToStartIMU 
+            |__ shiftToStartIMU()      以下是三个IMU 转换
+            |__ veloToStartIMU()
+            |__ transformToStartIMU()
+        |__ infoHandler 信息回调函数
+            |__ imuHandler()
+                |__ extractInfo()      获取从订阅了订阅里面的基础信息
+                    -> imuTime ->imuRoll/Pitch/Yaw ->imuAccX/Y/Z ->imuAngularVeloX/Y/Z
+                |__ AccumulateIMUShiftAndRotation()   用Acc 和角速度更新累加imu数据
+                    -> imuShiftX/Y/Z ->imuVeloXYZ ->imuAngularRotationX  基于地图坐标系
+            |__ laserHandler() 
+            |__ outlierCloudHandler()
+            |__ laserCloudInfoHandler()
+    |__ runFeatureAssociation() 函数主体
+        |__ checkTimeStampAndGrabInfo() 查看时间戳 并且提取信息
+        |__ adjustDistortion()  对 segmentedPoint 去畸变  segmentedCloud intensity 的信息从 ij 行列号 改为了 行+时间比例
+            |__ calculateYaw () 和雷达传感器模型有关系
+            |__ for_each point: current_point_cloud
+                |__ checkImuTimeQueue()  寻找刚刚早于的imu数据
+                |__ updateimuShift/Velo/AngleCur() imu插补的过程
+                |__ transformToStartIMU(point) 把点转换到第一个点的imu坐标系下
+        |__ calculateSmoothness() 计算每个点的平滑性
+        |__ markOccludedPoints() 两种Occluded的点 距离波动大的点 远处被遮挡的点 -> cloudNeighborPicked 被设置成1
+        |__ extractFeatures() 对 四种平滑度不同的点进行提取
+            |__ for each SCAN
+                |__ for each 1/6 of SCAN
+                    |__ extractEdge()    最大 Edge 2个 Less Edge 20个
+                    |__ extractPlane()   从地面点中找 最大Flat 4个 
+                                         剩下的点当作LessFlat 做一次 下采样
+        |__ updateInitialGuess() 将现有startCur 更新成没有Cur  -> transformCur 进行更新
+                                 更新角度和进行位置估计         -> imuPitchCu
+        |__ updateTransfromation()  使用面和线特征进行里程计匹配 内部还是有一些策略的 但是目前不能走偏先不进行阅读
+            |__ for[1:25]
+                |__ findCorrespondingSurfFeatures()  寻找对应关系
+                |__ calculateTransformationSurf()
+            |__ for[1:25]
+                |__ calculateTransformationCorner()
+                |__ calculateTransformation()
+        |__ integrateTransformation()  更新 transformSum
+            |__ AccumulateRotation()   -> rx ry rz ->tx ty tz 
+            |__ PluginIMURotation()
+        |__ pubOdometry() 
+
+ImageProjection                             处理原始点云
+    |__ 输入
+        |__ 原始点云
+    |__ 输出
+        |__ segmented_cloud 
+        |__ ground_cloud
+        |__ segmented_cloud_pure
+        |__ outlier_cloud
+        |__ full_cloud_projected
+        |__ full_cloud_info
+        |__ segmented_cloud_info
+    |__ 重点member 记述
+        |__ segMsg 内容记述
+            |__ startOrientation 第一个点的方向
+            |__ endOrientation   最后一个点的方向
+            |__ orientationDiff  一个sweep 帧内部角度变化
+            |__ startRingIndex   一维向量 单个线束正式使用开始的index 
+            |__ endRingIndex     一维向量 单个线束正式使用结束的index
+            |__ segmentedCloudGroundFlag  一维向量 1 代表是地面点
+            |__ segmentedCloudColInd      一维向量   包含点对应的列数
+            |__ segmentedCloudRange       一维向量   存储range 
+            注： startRingIndex、endRingIndex、segementedCloudColInd 构成了 segMsg 的row、col 信息
+        |__ laserCloudIn raw_point_cloud
+        |__ rangeMat     存储range 的Mat 
+            row colomn 按照 vertical 和horizon angle 分布
+        |__ groundMat    地面点 Mat 1 代表是地面点  0 非地面点
+        |__ labelMat     地面点+rangMat无效点 Mat -1 是两种point的表示
+                                                 0 是剩下的有效点
+                                                 1 2 3 4 label point
+                                                 999999 为被抛弃的点
+            以上三个Mat 均为二维表示
+        |__ fullCloud
+            |__ point 存储 XYZ 信息 intensity 存储 rangeMat的 row col 信息
+        |__ fullInfoCloud
+            |__ intensity 用于存储range
+        |__ groundCloud 保存fillCloud中的地面点
+        |__ segmentedCloud    一维点 intensity 保存了行列信息
+        |__ segmentedCloudPure
+            以上五个 PointCloud 都是一维表示
+        |__ labelCount   聚类的index
+    |__ ctor()
+        |__ pubAndsub()
+        |__ allocateMemory() 初始化内存
+        |__ resetParameters() 重设参数
+    |__ cloudHandler() 重要的点云处理函数 接受raw_point_cloud
+        |__ copyPointCloud() 赋值raw_point_cloud 到内存 -> laserCloudIn
+        |__ findStartEndAngle()
+            寻找一个sweep 的雷达帧的始末yaw角度
+        |__ projectPointCloud()
+            按照 horizon_angle 和 vertical_angle 将一个sweep 数据变为一个rangeMat 数据
+            -> rangeMat ->fullCloud ->fullInfoCloud
+        |__ groundRemovel()
+            根据抚养角进行判断是不是地面点
+            ->labelMat ->groundMat ->groundCloud
+        |__ cloudSegmentation()  点云聚类分割
+            |__ for_each point labelComponent(i,j) 利用 ij 对应的rangMat进行聚类
+                                                   过完这一次labelMat 就彻底被标记好了
+                |__ labelPlanePoint()    利用角度 来提取平面
+                |__ labelStragety()      最终策略 决定是否提取
+                    |__ 如果聚类点超过30个就直接进行标记
+                    |__ 如果聚类点的包含了行数超过了3行 也进行标记
+                |__ labelTrashPoint()    labelMat 被抛弃的点标为999999
+            |__ filloutlierCloudandsegMsg() 填充segMsg outlierCloud segmentedCloud
+                                            目前 看来还有一个功能就是给 地面点和非聚类点进行一次 降采样
+                                            仔细看完之后，999999的点基本都去掉了，只留下了一小部分 放到了
+                                            Outlier里面
+                                            segmentedCloud 只留下了的有效label点 和 一小部分的地图点
+            |__ fillsegmentedCloudPure()    填充 segmentedCloudpure
+                                            目前看来唯一一个含有label信息的对象
+        |__ PublishCloud()    
+        |__ resetParameters()  
+
+mapOptimization                             LoopClosue 和 ScanToMap匹配  整体优化
+    |__ 输入
+        |__ surfPointsLessFlat
+        |__ cornerPointsLessSharp
+        |__ outlier
+        |__ odo_init 从里程那里得到的内容当
+    |__ 输出
+        |__ key_pose_origin
+        |__ laser_cloud_surround
+        |__ aft_mapped_to_init
+        |__ 显示类点云...
+    |__ 重要member var 记述
+        |__ 下采样
+            |__ downSizeFilterCorner   以下三个是点云下采样
+            |__ downSizeFilterSurf
+            |__ downSizeFilterOutlier
+            |__ downSizeFilterHistoryKeyFrames    以下四个下采样之后关注
+            |__ downSizeFilterSurroundingKeyPoses
+            |__ downSizeFilterGlobalMapKeyPoses
+            |__ downSizeFilterGlobalMapKeyFrames
+        |__ transform 相关
+            |__ transformIncre
+            |__ transformTobeMapped
+            |__ 
+    |__ run() 主体函数
+        |__ timeStampcheck()
+        |__ transformAssociateToMap()
+            -> transformIncre ->transformTobeMapped
+        |__ extractSurroundingKeyFrames() 生成submap 无闭环 直接利用位置+kdtree 找附近的关键帧 组合一个submap
+        |__ downsampleCurrentScan()
+        |__ scan2MapOptimization()   ICP 线面匹配 无Cude 设计 
+        |__ saveKeyFramesAndFactor() 放入gtsam 进行优化
+        |__ correctPoses()           保存isam 修正值
+        |__ pub/clear()
+    |__ performLoopClosure()         假定得到detectLoopClosure == true 使用ICP 进行匹配
+                                     ICP收敛 isam 加入进行顶点和边  进行优化
+    |__ detectLoopClosure()          物理空间查找 targetframe 的时间戳和现在时间戳差距>30s
+                                     找targetframe 附近前后各25帧组成submap 给之后ICP 匹配使用
+            

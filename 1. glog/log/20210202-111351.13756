@@ -1,0 +1,7 @@
+Log file created at: 2021/02/02 11:13:51
+Running on machine: sunny-fHulk
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I0202 11:13:51.832868 13756 glog-test.cpp:21] I am INFO!
+W0202 11:13:51.833112 13756 glog-test.cpp:22] I am WARNING!
+I0202 11:13:51.833534 13756 glog-test.cpp:26] HHHH
+F0202 11:13:51.833551 13756 glog-test.cpp:32] Check failed: false there is something wrong with xxx

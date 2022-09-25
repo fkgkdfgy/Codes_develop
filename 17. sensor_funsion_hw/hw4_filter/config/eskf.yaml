@@ -1,0 +1,24 @@
+%YAML:1.0
+---
+
+
+line_count: 999999
+interval: 1000
+
+# IMUNoise:
+#   Ng: 5e-2
+#   Na: 5e-2
+#   Ngwalk: 1e-4
+#   Nawalk: 1e-4
+
+# LaserNoise:
+#   NRot: 1e-4
+#   NTra: 1e-4
+
+Ng: 5e-2
+Na: 5e-2
+Ngwalk: 1e-4
+Nawalk: 1e-4
+
+NRot: 1e-4
+NTra: 1e-4

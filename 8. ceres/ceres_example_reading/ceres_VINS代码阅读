@@ -1,0 +1,7 @@
+ceres 相关 结合知乎 minxuan 的修改
+    |__ LocalParameterization
+        |__ PoseLocalParameterization 
+            Quternion + R3 进行表示
+            ComputeJaocbian 为单位阵 基本猜测是AnalysticDiff 已经证实是这样的
+    |__ problem API
+        |__ AddParameterBlock 没啥用 感觉只是减少函数的调用的消耗

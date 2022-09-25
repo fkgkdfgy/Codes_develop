@@ -1,0 +1,205 @@
+代码结构:
+
+feature_tracker_node 单节点单线程
+estimator_node       单节点多线程
+    |__ process IMU预积分 初始化 LocalBA
+    |__ loop_detection
+    |__ pose_graph
+
+=============================================================================
+
+feature_tracker
+    |__ 输入
+        |__ raw_image
+    |__ 输出
+        |__ pointCloud  跟踪的特征点
+        |__ feature_image 给rviz 用于调试
+    |__ 重要参数含义(见配置文件 config/realsense)
+    |__ feature_tracker_node          信息接口 ROS 外包装 
+        |__ 输出
+            |__ feature_points
+                |__ points            保存归一化点
+                |__ channels          包含速度、uv、id信息 
+        |__ readParams()
+        |__ spin()                              回调处理传入的raw_image
+            |__ image_callback() 
+                |__ firstImageInit()            保存初始时间
+                |__ checkIfImageStable()        查看两帧image 间隔时间是否过大
+                |__ frequencyControl()          防止图像发布过快
+                |__ fillIntoFeatureTracker()
+                |__ if PUB_THIS_FRAME              
+                    |__ pubFeatruePoint()
+                    |__ pubCircleImage()
+    |__ feature_tracker               特征点追踪算法主体
+        |__ 重要member var 含义
+            |__ pre_img,cur_img,forw_img             更早 早 现在 三张图
+            |__ pre_pts,cur_pts,forw_pts             更早 早 现在 三组点(u,v)
+            |__ pre_un_pts,cur_un_pts,forw_pts       更早 早 现在 三组点(x,y,1) 
+            |__ pts_velocity              点的速度
+        |__ readImage()               函数主体
+            |__ PyrLKTracking()       之前有值就调用cv:: calcOpticalFlowPyrLK() 进行track
+                                      这里可以看出是直接使用cur_pts
+                                      经过光流来寻找forw_pts
+            |__ if PUB_THIS_FRAME
+                |__ rejectWithF()         RANSAC + FundamentalMat 筛一次特征点
+                |__ setMask()             保证和现有点有一定距离，保证特征点均匀
+                |__ goodFeaturesToTrack() 应该是从forw_img 当中再提取一部分点来用于之后的跟踪
+                |__ addPoints()           队列中添加新的特征点
+            |__ updateInfo()              新旧信息更新 + 计算点的速度(和相机模型有关) 没仔细看怎么算的? 
+
+=============================================================================================
+
+vins_estimator_node
+    |__ 输入
+        |__ imu_info
+        |__ feature_points
+        |__ restart 
+        |__ pose_graph/match_points
+    |__ 输出内容一大堆
+    |__ imu_callback()                ros::TransportHints().tcpNoDelay()?? 加强实时性？
+
+        |__ disorderCheck()
+        |__ save()
+        |__ predict()                 数据递推
+                                      -> tempQ tempV tempP 
+                                         acc_0 gyr_0
+        |__ if Pub() 
+    |__ feature_callback()
+        |__ save()
+    |__ restart_callback()
+        |__ reset()
+    |__ relocalization_callback()
+        |__ save()
+    |__ getMeasurements()              对齐Imu和图像时间信息
+                                       要求IMU 时间段包裹住图像时间
+                                       IMU 时间段 属于(t_pre_img,t_cur_img]
+                                       返回  vector<IMU>,cur_img
+                                       最后一个IMU 时间需要晚于t_cur_img 以进行插值       
+    |__ process()                      函数主体
+        |__ while(true)
+            |__ getMeasurements()
+            |__ for_each IMU in IMUs     IMU 信息放入Estimator
+                fillIntoEstimator        ->processIMU()
+            |__ handleRelocationInfo() ? 暂时对不起来
+            |__ collectFeatureInfo()     feature_points 放入 Estimator
+                fillIntoEstimator        ->processImage()
+            |__ 一堆Pub()
+            |__ update()                 使用优化信息 更新 tmpP tmpQ tempV 
+                                         tmp_Ba tmp_Bg acc_0 gyr_0
+                |__ updateTmpSeqWithEstimator()
+                |__ predict()            更新这个时间点之后的递推
+
+estimator
+    |__ 重要member var 记述
+        |__ ric tic                                imu camera 外参
+        |__ buf 类
+            |__ dt_buf                                 存放imu时间间隔
+            |__ linear_acceleration_buf
+            |__ angular_velocity_buf
+            |__ all_image_frame                    map<time,ImageFrame> 
+                                                   保存所有图像RT和imu预积分
+        |__ 内嵌类
+            |__ IntegrationBase
+            |__ FeatureManager
+            |__ MotionEstimator
+            |__ InitialEXRotation
+        |__ pre_integration 类
+            |__ tmp_pre_integration                包含(t_pre_image,t_cur_image] 时间中的imu 数据
+                                                    ] 是因为插值取到
+    |__ interface
+        |__ processIMU() 
+            |__ initIfNeeded()
+            |__ createNewImuIntegration()
+            |__ fillIMUInfoIntoImuIntegration()
+            |__ deadReckenUsingIMU()
+        |__ processImage()                         map<feature_id,vector<pair<camera_id,xyz_uv_velocity>>> 单目的vector.size() ==0
+            |__ fillIntoFeatureManager()
+            |__ calibExtrinsicIfNeeded()            ?
+            |__ initialIfNeeded()
+                |__ initialStructure()
+            |__ NonLiearOpIfNeeded()               滑窗优化
+    |__ internal
+        |__ initialStructure()
+            |__ checkVarofGravity()                为什么var<0.25 会说excitation not enough！ 存疑
+            |__ globalSFM()
+                |__ collectSFMInfo()               将目前所有feature 的所有观测得到
+                                                   
+                |__ relativePose()                 检查视差和特征数量是否足够，然后计算相对
+                                                   返回relative R 和 T 还有就是满足三角化视差的
+                                                   图像帧id l
+                |__ GlobalSFM()                    使用l 和 10 的图像帧进行滑窗内所有帧的初始化
+                    -> GlocalSFM::construct()             
+                |__ solvePnPforAllFrame()          对all_image_frame 内所有的帧进行 PNP 估计
+                |__ visualInitialAlign()           视觉+惯导融合
+        |__ visualInitialAlign()                   视觉+惯导融合
+            |__ VisualIMUAlignment()
+
+
+
+feature_manager.h
+    FeaturePerFrame                   用途: 保存特征点在每一帧数据中的信息
+        |__ point,uv,velocity         用途已知
+        |__ cur_td                    以下内容用途均未知
+        |__ is_used 
+        |__ parallax
+        |__ A
+        |__ b
+        |__ dep_gradient
+    FeaturePerId                      用途：保存一个id 对应的特征点在多个frame 之间的信息
+                                        使用 vector<FeaturePerFrame> 用于保存这些信息
+        |__ feature_id
+        |__ start_frame
+        |__ vector feature_per_frame
+        |__ used_num
+        |__ is_outlier
+        |__ is_margin
+        |__ estimated_depth
+        |__ solve_flag
+        |__ gt_p
+        |__ end_frame()               hint： 特征点的追踪是一个连续的过程，不含有LoopClosure 的信息
+    FeatureManager
+        |__ 重要member var 记述
+            |__ ric                   外参
+            |__ Rs                    未知
+            |__ feature               存储feature信息
+                list<FeaturePerId>
+            |__ last_track_num        新的一帧图像 追踪到点的数目
+        |__ addFeatureCheckParallax()          这里做的就是添加Feature 并且检查帧间的Parallax ，
+                                               如果视差足够大，就边缘化旧的一帧，不然就边缘化新的一帧。
+            |__ updateFeatureInfo()            这里的Feature说的就是 list<FeaturePerId> feature
+            |__ checkParallex()                计算视差决定是不是关键帧
+                                               检查过后发现是比较倒数第二第三帧的特征
+                |__ for feature
+                    compensatedParallax2()     这
+        |__ getCorresponding(int frame_id_1, int frame_id_2)   查找frame_id_1 和 frame_id_2 之间相互关联的点
+                                                               这里的id 表示存疑
+        
+
+
+initial_sfm.h
+    SFMFeature  没有多少问题不进行解读        
+        |__ vector<pair<int,vector2d>> oberservation    存储观察到的frame_id 和归一化信息
+        |__ state                                       是否已经进行过三角测量
+        |__ point                                       三角测量结果
+    ReprojectionError3D ceres 误差项
+    GlobalSFM
+        |__ triangulatePoint()                                  视觉基础内容 三角测量
+        |__ triangulateTwoFrames()                              两帧数据进行三角测量
+                                                                有结果的SFMFeatrue status = true point赋值 三维点
+        |__ solveFrameByPnP(R_initial,P_inital,frame_id,sfm_f)  使用已经有的sfm_f 对 frame_id i的图像帧估计 R 和P  
+        |__ construct()                                         整体求3d 点和0到frame_num-1 的位姿
+            - step 1: 所有pose和feature点的初始化, 以第l帧为参考坐标系
+            1. 先第l帧和最后一帧做三角化,根据三角化的点PnP求解第l+1的位姿,再l+1和最后一帧三角化,再PnP求l+2位姿,依次求到倒数第二帧的位姿.
+            2. 第l+1帧~倒数第二帧的所有帧与第l帧三角化剩下的特征点
+            3. 依次PnP求解第l-1帧~第0帧的位姿并将第l-1帧~第0帧 与 第l帧做三角化.
+            4. 遍历所有特征点, 对那些还没有三角化的点,如果观测大于2个, 根据首尾观测进行三角化.
+            - step 2: Local Bundle Adjustment, ceres
+            5. ceres求解, residuals用的特征点到每一帧重投影误差, 将求解结果写出到q,T和sfm_tracked_points
+
+initial_alignment.cpp
+    |__ VisualIMUAlignment() 
+        |__ solveGyroscopeBias()            更新 gyro 的bias 并 使用新的gyro_bias repropagate
+        |__ LinearAlignment()   
+integration_base.h q p v ba bg 一共15维
+    |__ IntegrationBase
+        |__       

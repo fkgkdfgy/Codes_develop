@@ -1,0 +1,8 @@
+%YAML:1.0
+---
+
+WHAT: !!opencv-matrix
+  rows: 3
+  cols: 3
+  dt: d
+  data: [6, 2, 2, 2, 6, 2, 2, 2, 6]

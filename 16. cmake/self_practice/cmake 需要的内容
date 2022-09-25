@@ -1,0 +1,14 @@
+cmake
+   |__ 各种路径的意思 CMAKE_LIBRARY_OUTPUT_DIRECTORY
+                    CMAKE_SOURCE_PATH
+                    等...
+   |__ find_package 的生成方法  
+   |__ (target_)link_directory vs (target_)link_libraries   完成
+       |__ 目前看来 link_directory 只是添加了一个库搜索路径
+           之后还需要通过link_libraries 来进行库的添加
+           而不是 一个 link_directory 就一劳永逸了
+           ie. 
+           link_directories("/home/sunny/workspace_public/3rdParty/data_manager/lib")
+           link_libraries(libdata_client_ros.so)
+   |__ install
+   |__ configure_file   完成

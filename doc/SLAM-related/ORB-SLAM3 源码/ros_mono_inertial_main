@@ -1,0 +1,15 @@
+ImuGrabber    内部存了一个queue<Imu::ConstPtr> 用于保存来自ROS 的IMU数据
+
+ImageGrabber  Imu数据和SLAM 系统的包装类
+    |__ 重要member var 记述
+        |__ img0Buf                    img Buff
+        |__ mpSLAM                     SLAM 系统算法类
+        |__ mpImuGb                    ImuGrabber 存储IMU信息
+        |__ mClahe                     Contrast Limited Adaptive Histogram Equalization
+    |__ GrabImage(image::ConstPtr)     ros spin image 获取callback
+    |__ GetImage(image::ConstPtr)      ROS imgae 转成 cv::Mat
+    |__ SyncWithImu()                  新开的线程使用的函数
+        |__ CollectCorrespondingImuAndImageInfo()
+                                       提取成组的IMU和视觉信息
+        |__ TrackMonocular(img,tIm,vImuMeas)             
+                                       开始跑

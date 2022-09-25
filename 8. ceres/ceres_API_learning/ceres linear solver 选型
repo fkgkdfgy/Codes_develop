@@ -1,0 +1,19 @@
+DENSE_QR: 几百个参数 几千个residual, 并且稠密的Jacobians 使用 
+          对于方阵使用，当然二次形一定可以满足这个条件
+          Q这里是正交矩阵 R是上三角矩阵
+
+
+CHOLESKY 是一种对于正定对阵矩阵的分解方式 O(n^3/6)
+DENSE_NORMAL_CHOLESKY: 比QR更加大型的相对稀疏的矩阵求解
+                       调用 Eigen 的 LDLT 进行求解
+SPARSE_NORMAL_CHOLESKY: SuitSparse CXSparse Eigen 的稀疏cholesky
+
+
+
+CGNR：超大矩阵 基本用不到             
+
+
+对于BundleAdjustment 问题： 因为结构特殊性(有四个块的对称矩阵 且0,0 1,1 矩阵块的元素集中在对角线上，可以快速求逆)
+                          可以使用SCHUR 进行求解
+蛮有趣的
+DENSE_SCHUR 和 SPARSE_SCHUR 主要取决于 reduced camera matrix (这个名词在ceres docs 中可以搜到) 的稠密程度

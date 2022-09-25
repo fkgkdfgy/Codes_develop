@@ -1,0 +1,27 @@
+相机模型
+
+GeometricCamera             基类
+    |__ 重要mv
+        |__ double * mvParameters   相机内参
+    |__ project(R3) ->R2            把相机坐标系内的点投影到像素坐标系内
+    |__ unproject(R2) ->R3          把像素坐标系内的点投影到相机坐标系内
+    |__ projectJac(R3) ->R2×3       delta(u,v)/delta(x,y,z)       应该是留给之后优化进行使用
+    |__ unprojectJac(R2) ->R3×2     delta(x,y,z)/delta(u,v)
+    |__ ReconstructWithTwoViews(vKeyPs1,vKeyPs2)       内部使用TwoViewReconstruction 应该是三角化之类的操作
+        -> vMatches,R21,t21,vP3D,vbTriangulated                  
+
+
+TwoViewReconstruction
+    |__ 重要member var
+        |__ mvMatches12             vector<int> 代表了12帧特征点之间的Matches 关系
+        |__ mvMatched1              vector<bool> 代表1帧是否有对应的特征点
+    |__ Reconstruct(vKeyPs1,vKeyPs2)              接口函数
+        -> vMatches,R21,t21,vP3D,vbTriangulated  
+        |__ fillmvMatches12AndmvMatched1()
+        |__ RANSACfindHF()
+        |__ ReconstructWithHorF()       
+    |__ internal
+        |__ FindHomography()
+        |__ FindFundamental()
+        |__ ReconstructF()
+        |__ ReconstructH()

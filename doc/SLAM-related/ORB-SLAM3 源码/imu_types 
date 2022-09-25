@@ -1,0 +1,32 @@
+Point           存储imu 的测量信息
+
+Bias            存储 gyro 和accel 的测量信息
+
+Calib           存储 imu 的外参和噪声方差和行走方差
+
+IntegratedRotation    对于单个gyro信息进行预积分的结果
+    |__ ctor(angVel,deltaT,imuBias)    deltaR 根据旋转大小
+                                       采取近似和非近似计算
+    |__ deltaT deltaR rightJ           rightJ 就是向右展开时候的J
+        exp(x+delta_x) = exp(x)exp(rightJ*delat_x)
+
+Preintegrated
+    |__ 重要 mv 记述
+        |__ mvMeasurements              存储imu 信息
+        |__ b                           Bias
+        |__ C                           Convariance 15×15 R P V bias_g bias_g
+        |__ JRg JVg JVa JPg JPa         对deltaR/V/P 进行g/a 求导的值用于修正
+        |__ Nga                         Covariance of Noise g and a 6×6
+        |__ NgaWalk                     bias 的更新 Covariance 6×6
+        |__ dP dR dV                    bias 是常值的相对量
+        |__ bu                          bias updated
+    |__ ctor() copy ctor()
+    |__ CopyFrom = copy ctor()
+    |__ Initialize(bias)                使用bias 进行初始化
+    |__ IntegrateNewMeasurement()       更新dP dV dR  这个函数就是 Forster14 的完整实现
+        |__ 重要tv
+            |__ 
+        |__ updatedPdV()                有细节说明进来的acc 已经去掉了重力加速度的影响
+        |__ ...                         逻辑通了之后 剩下的就不重要了
+    |__ getDelta/Origin ...             Delta 就是含有bias影响的XX Origin 就是把Bias 看成常值的XX
+

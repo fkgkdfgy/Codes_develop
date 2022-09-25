@@ -1,0 +1,35 @@
+FLD转化KeyLine 的代码
+
+
+            lines.reserve(fld_lines.size());
+            for( int i = 0; i < fld_lines.size(); i++ )
+            {
+                KeyLine kl;
+                double octaveScale = 1.f;
+                int    octaveIdx   = 0;
+
+                kl.startPointX     = fld_lines[i][0] * octaveScale;
+                kl.startPointY     = fld_lines[i][1] * octaveScale;
+                kl.endPointX       = fld_lines[i][2] * octaveScale;
+                kl.endPointY       = fld_lines[i][3] * octaveScale;
+
+                kl.sPointInOctaveX = fld_lines[i][0];
+                kl.sPointInOctaveY = fld_lines[i][1];
+                kl.ePointInOctaveX = fld_lines[i][2];
+                kl.ePointInOctaveY = fld_lines[i][3];
+
+                kl.lineLength = (float) sqrt( pow( fld_lines[i][0] - fld_lines[i][2], 2 ) + pow( fld_lines[i][1] - fld_lines[i][3], 2 ) );
+
+                kl.angle    = atan2( ( kl.endPointY - kl.startPointY ), ( kl.endPointX - kl.startPointX ) );
+                kl.class_id = i;
+                kl.octave   = octaveIdx;
+                kl.size     = ( kl.endPointX - kl.startPointX ) * ( kl.endPointY - kl.startPointY );
+                kl.pt       = Point2f( ( kl.endPointX + kl.startPointX ) / 2, ( kl.endPointY + kl.startPointY ) / 2 );
+
+                kl.response = kl.lineLength / max( fld_img.cols, fld_img.rows );
+                cv::LineIterator li( fld_img, Point2f( fld_lines[i][0], fld_lines[i][1] ), Point2f( fld_lines[i][2], fld_lines[i][3] ) );
+                kl.numOfPixels = li.count;
+
+                lines.push_back( kl );
+
+            }

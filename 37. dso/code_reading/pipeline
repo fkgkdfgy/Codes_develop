@@ -1,0 +1,18 @@
+
+FullSystem 是整个主体
+    |__ addActiveFrame 入口函数
+        |__ Frame 初始化
+            |__ 位姿之类的初始化
+            |__ 得到曝光时间，进行金字塔的构建 -> makeImages
+        |__ !Init -> Initializer Related
+        |__ Init -> Track
+            |__ trackNewCoarse()
+
+
+Initializer Related
+    |__ setFirst
+
+
+tips: FrameHessian 就是DSO 里面的Frame
+      ab_exposure  保存曝光时间
+

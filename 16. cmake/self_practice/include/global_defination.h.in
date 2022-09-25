@@ -1,0 +1,14 @@
+/*
+ * @Author: Liu Weilong
+ * @Date: 2020-10-27 09:30:16
+ * @LastEditors: Liu Weilong 
+ * @LastEditTime: 2020-10-27 09:38:32
+ * @FilePath: /3rd-test-learning/22. cmake/include/global_defination.h.in
+ * @Description: 
+ */
+#pragma once
+#cmakedefine A
+#cmakedefine TEST_V1 "@TEST_STRING@"
+#include <string>
+
+const std::string WORK_PATH = "@WORK_SPACE_PATH@";

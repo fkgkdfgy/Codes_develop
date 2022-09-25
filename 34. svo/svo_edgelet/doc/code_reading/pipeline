@@ -1,0 +1,101 @@
+test_pipeline
+    |__ RunFromFolder
+        |__ vo_.addImage()   VO 入口
+vo.addImage(img)
+    |__ startFrameProcessingCommon(timestamp)     时间戳 check
+    |__ Frame (img)                               构建多层金字塔
+    |__ 是整个系统第一个图像 processFirstFrame()
+        |__ KltHomographyInit->addFirstFrame()    提取特征
+        |__ setKeyFrame()                         对Frame的key_pts_进行设置，SVO的关键特征点一个Frame 只有 5个 
+                                                  中间一个然后划分四个块，一个块一个最优，让特征尽可能在视野中央。
+                                                  这里以(cu,cv)为界进行划分
+        |__ map_->addKeyFrame()                   一个简单的push_back
+    |__ 是整个系统第二个图像 processSecondFrame()
+        |__ KltHomographyInit->addSecondFrame()   进行了一次klt追踪,HE inliner extract 添加匹配的fts_到cur_frame_
+        |__ (options) TwoViewBA
+        |__ getSceneDepth()                       用于seed 的mean_depth 和 min_depth 的初始化
+        |__ depth_filter ->addKeyframe()          开始对frame的_cur 进行初始化，种子点进行那初始化
+        |__ map_->addKeyframe()                   
+    |__ 剩下的情况 processFrame()
+        |__ SparseImageAlign()                    出简单估计的位姿
+        |__ Reprojector->reprojectMap() (Align2D) 
+        |__ PoseOptimization()
+        |__ StructureOptimization()
+        |__ getSceneDepth()
+        |__ depth_filter->addKeyframe()
+        |__ for each_KF depth_filter->addFrame()  更新seeds
+        |__ map_->addKeyframe()
+    |__ show()                                    一大段用于显示的代码
+    |__ finishFrameProcessingCommon()             一些push_back 没有太多内容
+
+
+=============================
+addFirstFrame\ 均来自于KltHomographyInit
+
+KltHomographyInit
+    |__ 重要member
+        |__ px_cur_\px_prev_\px_ref_           这个应该是实际pixel存储
+        |__ frame_ref_                         用于Track 的Frame
+        |__ f_ref_ f_cur_                      这个是keypoint 的归一化坐标
+        |__ disparities_                       xy 上的视差都有保存
+        |__ ftr_type_                          Vector3f 前xy是梯度值，z表示类型 1 是 edgelet 0 是普通的点
+    |__ addFirstFrame()
+        |__ detectFeatures() 提取针对的金字塔层数存疑？？ 为每一个点建立种子
+        |__ CheckFeatureNum\CheckCenterFeatureNum 检查特征数量和图像中间特征的数量 可以结合 ORB Fast 的角度 作为一种预处理 
+    |__ addSecondFrame()
+        |__ trackKlt()                        这里因为还没有对点的深度开始进行估计所以跟踪使用的是 opencv 的klt 进行跟踪
+        |__ CheckDisparity()
+        |__ 通过Disparity 的方差大小选择 H E 的选择 小视差用H 大视差用E，进行RANSAC inliner 选择
+    
+============================
+SparseAlign
+    |__ Inverse Compostional Direct Method
+
+============================
+Reprojector
+    |__ reprojectMap()
+        |__ map_->getCloseKeyframes()
+        |__ reproject_candidates()
+        |__ Align1D\Align2D
+
+============================
+initialization.H
+    |__ detectFeatures()               Edgelet 和 Point 采用同一种Frame进行存储，只是type 不同
+        |__ detectFast                 
+        |__ detectEdgelet              GaussianBlur + Scharr_X Scharr_Y + Canny
+    |__ trackKlt()                     OpenCV calcPyrOpticFlow
+
+
+============================
+最后剩下的内容
+DepthFilter
+
+    |__ initializeSeeds()
+    |__ updateSeeds()                       Seeds 更新，Converge 之后， Seed 删除， 创建Point
+                                            由此可以知道，其实所有的Point 都是收敛之后得到的
+    |__ addKeyframe()                       用于初始化
+        |__ initializeSeeds()               代码主体，主要内容就是，对于Feature 提取角点，然后将这些角点初始化为seeds 
+                                            开始进行迭代
+    |__ addFrame()                          用于seeds 进行更新
+        |__ updateSeeds()                   内部进行，Seeds点的更新，Converge 之后， Seed 删除， 创建Point
+
+
+
+============================
+Reprojector
+    |__ reprojectMap()                      函数主体
+        |__ resetGird()                     重置栅格
+        |__ getCloseKeyframes()             也就是点可以被Frame 看到的KF
+        |__ ReProjectPoints()               这里就是把点反投影到cell 的过程
+                                            并 通过 overlap_kfs 来保存，KF到现在F的投影数量
+        |__ mapCandidatesCheck()            对MapCandidates 中的点继续往 Cell 进行投影
+        |__ for_each cell reprojectCell     对每一个 Cell
+                                               对Cell 内 每一个Point 进行 FindDirectMethod  Align2D
+                                                  只要cell 内有一个点匹配上，就直接跳出
+        |__ 有足够多的cell reproject 成功就跳出
+
+
+
+Tips： 
+1. Frame 的 key_pts_ 似乎只是用于判断和KF 的画幅共视关系
+2. 

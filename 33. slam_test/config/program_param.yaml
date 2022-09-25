@@ -1,0 +1,5 @@
+%YAML: 1.0
+---
+
+LineExtractor.Vertical.length: 30
+LineExtractor.Vertical.error: 0.3

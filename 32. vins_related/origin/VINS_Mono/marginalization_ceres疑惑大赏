@@ -1,0 +1,25 @@
+MarginalizationFactor  直接继承CostFunction 最普通的一个
+    |__ 包含 MarginalizationInfo 用于存储 piror 信息
+    |__ Evaluate    
+    |__ 比较特别的是 
+    1.  MarginalizationFactor 直接继承 CostFunction
+        而不是 SizedCostFunction
+        这里也是加深了我对于 Ceres 的理解
+        SizedCostFunction 只是对 CostFunction 进行了
+        以下两个操作，如果自己知道了也可以自己进行添加
+        set_num_residuals(int n)  确定Residual 的Size 和
+        mutable_parameter_block_sizes().push_back(int n) 确定各个 parameter 的Size
+    2.  MarginalizationFactor 给 problem 添加的时候
+        直接调用底层AddResidualBlock(CostFunction *, LossFunction*,vector<double*>)
+        而不是之前的
+        AddResidualBlock(CostFunction *, LossFunction*,double* ,...,double*)
+
+MarginalizationInfo   
+    |__ addResidualBlockInfo() 给 MarginalizationInfo 添加优化项的double *  和 Size
+    |__ preMarginalize()       得到所有优化项的double* 并且 让所有ResidualBlockInfo 计算好 residual 和 jacobians
+    |__ marginalize()          函数主体 内部多线程构造Ab 然后就是高斯分布的边缘化了
+
+
+ResidualBlockInfo
+    |__ Evaluate()
+        内部直接利用 AnalyticDiff CostFunction 的 Evaluate 得到 residual 和 jacobians

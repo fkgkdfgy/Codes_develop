@@ -1,0 +1,4 @@
+std_msgs/Header header
+geometry_msgs/Pose cam_in_map_pose
+float64 translation_weight
+float64 rotation_weight

@@ -1,0 +1,18 @@
+%YAML:1.0
+---
+
+WholePath: /home/lwl/workspace/gnss-ins-sim/demo_saved_data/2021-05-28-06-55-44/
+
+RefAccPath: ref_accel.csv
+RefGyroPath: ref_gyro.csv
+RefVelPath: ref_vel.csv
+
+MeasAccPath: accel-0.csv
+MeasGyroPath: gyro-0.csv
+
+PosiPath: ref_pos.csv
+AttiPath: ref_att_quat.csv
+
+TimestampPath: time.csv
+
+InputNum: -1

@@ -1,0 +1,20 @@
+
+test_rosparam_node_1:
+  ros__parameters:
+    name: liu Weilong
+    sex: male
+    address: sdsdsd
+    phone_number: 0.2
+    personal_information.name: TNW
+    personal_information.sex: female
+
+
+test_rosparam_node:
+  ros__parameters:
+    name: liu Weilong
+    sex: male
+    address: xxxxxxxxx
+    phone_number: 0.2
+    personal_information.name: TNW
+    personal_information.sex: female
+

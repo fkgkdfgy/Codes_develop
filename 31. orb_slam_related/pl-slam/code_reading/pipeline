@@ -1,0 +1,22 @@
+stvo-pl 的insertStereoPair 作为主入口
+insertStereoPair
+    |__ extractStereoFeatures()
+    |__ f2fTracking()
+        |__ matchF2FPoints()   帧间描述子匹配
+        |__ matchF2FLines()    帧间描述子匹配
+
+stvo -> Optimization 一个点 线 PoseOptimization 优化项随后展开讨论
+
+stvo ->needKeyFrame 检验几何位置和方差  检验方差 里面还有一个 entropy_ratio 比较有趣，还没有细看
+
+map -> addKeyFrame 内部 lba 和lc 线程进行运作
+
+lba
+    |__ lookForCommonMatches()
+        |__ matchKF2KFPoints
+        |__ matchKF2KFLines
+        |__ optimizePose
+    |__ formLocalMap() 找共视
+    |__ LBA()
+
+full_graph 用于维护共视关系

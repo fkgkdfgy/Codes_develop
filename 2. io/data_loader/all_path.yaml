@@ -1,0 +1,6 @@
+%YAML:1.0
+---
+DataLoader.ImagePath.Left: /home/sunny/workspace_public/Dataset/self_test/cam0
+DataLoader.ImagePath.Right: /home/sunny/workspace_public/Dataset/self_test/cam1
+DataLoader.ImagePathIdx.Left: /home/sunny/workspace_public/Dataset/self_test/cam0.txt
+DataLoader.ImagePathIdx.Right: /home/sunny/workspace_public/Dataset/self_test/cam1.txt

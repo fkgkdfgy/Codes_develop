@@ -1,0 +1,55 @@
+include(imu_types)
+include(GeometricCamera)
+
+MapPoint(Mono)
+    |__ 重要member var 
+        |__ nods                 被看到次数
+        |__ mObservations        map<KeyFrame*,tuple<int,int>> 
+                                 KeyFrame* 也就是对这个点有观测的Keyframe指针
+                                 tuple<int,int> 在Keyframe中的存储index
+                                 有两个是因为有考虑双目的情况，单目就只用左边的一个
+        |__ mpMap                存在的地图指针
+        |__ mpRefKF
+        |__
+    |__ AddObservation(pKF,idx_in_KF)               idx_in_KF 也就是说这个点在KF中的存储index
+    |__ ComputeDistinctiveDescriptors()             在众多个产生的ORB Descriptor里面找一个最好的
+    |__ UpdateNormalAndDepth()                      ？ 还没有看
+
+Frame(Mono)
+    |__ 重要member var
+        |__ mvKeys         关键点坐标(u,v)
+        |__ mvKeysUn       去掉畸变的关键点坐标(u,v)
+        |__ mDescriptors   特征点描述子 每一行对一个特征点
+        |__ mPredBias、mImuBias          IMU Bias
+        |__ mpImuPreintegrated           从上一个关键帧到这里的IMU预积分
+        |__ mpLastKeyFrame               上一个关键帧
+        |__ mpImuPreintegratedFrame      从上一个帧到这里的IMU预积分
+        |__ mpPrevFrame                  上一帧
+        |__ mFeatVec\mBowVec             特征向量和词带向量 ？ 目前存疑 之后阅读词袋模型的时候再进行解析
+        |__ mvpMapPoints                 
+        |__ mvbOutlier                   ？ 存疑 目前是看起来是只在Optimizer 的时候进行使用
+    |__ ctor(imGray,timestamp,pORBextractor,        在构造的时候提取ORB ExtractORB()
+            pORBVocabu,pGeoCamera,discoeff,         去ORB点去畸变 UndistortKeyPoints()
+            ppreFrame)                              放到网格中    AssignFeaturesToGrid()
+    |__ ComputeBoW()             计算FeatureVector 和 BoWVector           
+
+KeyFrame(Mono)
+    |__ 重要member var
+        |__ mBowVec、mFeatVec                词袋和特征向量
+        |__ mConnectedKeyFrameWeights        map<KeyFrame *,int> 包含KeyFrame 的指针和权重
+        |__ mvpOrderedConnectedKeyFrames     list<KeyFrame*>根据权重排序的Keyframe
+        |__ mvOrderedWeights                 上面的mvpOrderedConnectedKeyFrames 每个KeyFrame 对应的权重
+        |__ mbFirstConnection                ？
+        |__ mparent                          ?
+    |__ ctor(pFrame, pMap,pDataSet)
+    |__ Set/Get...                 接口函数、没卵用
+    |__ ComputeBoW()               计算词带向量和特征向量
+    |__ covisibilityGraph
+        |__ AddConnection(pKF,weight)     添加pKF 共视关系
+        |__ EraseConnection(pKF)          估计是删除共视关系
+        |__ UpdateConnections()           对当前KF 内的所有MapPoints 的 observation 进行统计 -> 放在Kcounter内
+                                          共视>th个点 放入 vPairs
+                                          根据vPairs 生成新的 mvpOrderedConnectedKeyFrames、mvOrderedWeights
+                                          更新mparent？ 
+        |__ UpdateBestCovisibles()        从mConnectedKeyFrameWeights 更新 mvpOrderedConnectedKeyFrames、mvOrderedWeights
+    |__ SpinningTree

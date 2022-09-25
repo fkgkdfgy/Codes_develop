@@ -1,0 +1,19 @@
+ALOAM
+都在函数内部写了一个static 来进行CostFuntion* 获取
+    |__ LaserOdometry
+        |__ Eigen Quternion + R3 进行表示  + ceres::EigenQuaternionParameterization 
+            有了这个就是说明SE3的LocalParameterization 之后基本可以不用写了 
+        |__ LidarEdgeFactor 、LidarPlaneFactor 都是点到面 点到线的AutoDiff
+            在阅读当中发现 Eigen 可以适应 Jet 的存储方式
+    |__ LaserMapping
+        |__ LidarEdgeFactor 、LidarPlaneNormFactor(一个另类LidarPlaneFactor)、LidarDistanceFactor
+
+=====================================================================================================
+FLOAM
+OdomEstimationClass
+    |__ init()                                           初始化kdtree
+    |__ initMapWithPoints(edge_points,surf_points)       参数是地图点
+    |__ updatePointsToMap(edge_points,surf_points)       参数是雷达点
+                                                         添加Factor 的主体函数      
+        |__ addEdgeAnalysticFactor()
+        |__ addSurfAnalysticFactor()

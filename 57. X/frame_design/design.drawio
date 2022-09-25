@@ -1,0 +1,109 @@
+<mxfile host="65bd71144e">
+    <diagram id="ka_azCkVWpK6qUpT-xUZ" name="第 1 页">
+        <mxGraphModel dx="1000" dy="659" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="39" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="550" y="350" width="510" height="530" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="440" width="350" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="100" width="360" height="250" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="DataLoader" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="120" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="ImageProcessorBase" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="200" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="OpticalFlowBase" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="280" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="DescriptorBase" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="120" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="基础模块" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="70" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="LandmarkDB" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="200" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="V0.1基础内容" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="194" y="410" width="90" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="15" target="17" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="DataLoader&amp;nbsp;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="79" y="460" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="17" target="18" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="ImageProcessorBase" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="79" y="540" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="OpticalFlowBase&lt;br&gt;-&amp;gt; DirectOpticalFlow&lt;br&gt;-&amp;gt; SE2 OpticalFlow" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="79" y="620" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="LandmarkDB" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="505" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="读取数据 A pair of Image" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="730" y="360" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="数据去畸变、图像金字塔" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="730" y="420" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="26" target="27">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="26" value="左目Harris提取、右目进行普通光流&lt;br&gt;+ 外参筛选进行outlier的删除" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="575" y="560" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="第二组数据&lt;br&gt;circular SE2 +RANSAC光流, SE2旋转角度outlier筛除。&lt;br&gt;进行关键点的生成。" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="575" y="670" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="28" target="26">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="28" value="初始化" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="600" y="490" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="32" target="33">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="左目Harris提取、右目进行普通光流&lt;br&gt;+角点检测&lt;br&gt;+ 外参筛选进行outlier的删除" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="840" y="560" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="33" target="36">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="circular SE2 +RANSAC光流, SE2旋转角度outlier筛除，进行关键点的生成。" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="840" y="670" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="35" target="32">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="35" value="非初始化" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="865" y="490" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="36" value="TrackLocalMap 进行多个点AffineOpticalFlow&lt;br&gt;进行优化图优化, 进一步ransac" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="840" y="780" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="LandmarkCaffe" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="250" y="585" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="V0.1基础流程" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;dashed=1;" vertex="1" parent="1">
+                    <mxGeometry x="775" y="320" width="90" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="41" value="没有对于动态物体的处理能力、&lt;br&gt;没有回环" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="600" y="790" width="170" height="60" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

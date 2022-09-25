@@ -1,0 +1,19 @@
+Map
+    |__ 重要member 记述
+        |__ mspKeyFrames
+        |__ mspMapPoints
+        |__ mvpKeyFrameOrigins      每次初始化的时候的起点
+    |__ AddAndErase
+        |__ mfAddKeyFrame
+        |__ mfAddMapPoint
+        |__ mfSetReferenceMapPoints 用于显示
+        |__ mfEraseMapPoint
+        |__ mfEraseKeyFrame
+    |__ GetSomeThing   
+        |__ mfGetAllKeyFrames
+        |__ mfGetAllMapPoints
+        |__ mfGetReferenceMapPoints
+        |__ mfMapPointsInMap->int  得到Map中MapPoint 的点数
+        |__ mfKeyFramesInMap->int  得到Map中MKeyFrame的点数
+    |__ mfclear 清空
+        

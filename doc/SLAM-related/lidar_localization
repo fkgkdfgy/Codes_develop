@@ -1,0 +1,53 @@
+看到现在 其实也是算法和接口的形式
+算法基本都是单一接口  着一个确实需要学习
+
+
+loop_closure
+
+LoopClosingClosure
+    |__ 输入
+        |__ key_frame
+        |__ gnss_frame
+    |__ 输出
+        |__ loopPose index0 代表过去的 keyframeId index1 代表现在的keyframeId
+                     pose   则是一个relative 数值
+    |__ ctor()
+    |__ run()
+        |__ readData()
+        |__ hasData()
+        |__ updateLoop()
+        |__ publishData()
+
+这里使用gnss 进行匹配的方式有些讨巧，因为没有轨迹更新的过程(优化后的轨迹没有赋值到LoopClosure 节点)
+所以这里默认直接用gnss 进行回环的检测
+LoopClosing
+    |__ Update(key_frame,gnss_frame)
+        |__ DetectNearestKeyFrame()
+        |__ CloudRegistration()
+
+back_end
+
+BackEnd
+    |__ Update()
+        |__ MaybeNewKeyFrame()           判断关键帧+保存关键帧
+        |__ SavePose()                   保存 gnss + odom
+        |__ AddNodeAndEdge()             g2o 添加顶点和边
+        |__ MaybeOptimized()             optimized 判断条件
+        |__ SaveOptimizedPose()          保存优化后的位姿
+    |__ InsertLoopPose()                 g2o 使用
+BackEndFlow
+    |__ 输入
+        |__ synced_gnss
+        |__ odom
+        |__ loop_pose
+    |__ 输出
+        |__ key_frame 
+        |__ key_gnss
+        |__ optimized_key_frames 
+        |__ tf
+    |__ readData()
+    |__ maybeInsertLoopPose()    对 back_end 插入loop
+    |__ HasData()
+    |__ UpdateBackEnd()          调用back_end 主体函数
+    |__ PublishData()            
+    

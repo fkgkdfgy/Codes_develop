@@ -1,0 +1,3 @@
+通读下来就是
+    |__ CostFunction 是使用pose R3 和 Quaternion 来进行表示
+    |__ problem.SetParameterBlockConstant() 可以让指针指向的内容，不进行更新 也就是 frozen

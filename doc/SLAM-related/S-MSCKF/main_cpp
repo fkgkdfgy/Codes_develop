@@ -1,0 +1,15 @@
+MSCKF_VIO
+ROS_nodelet spin 驱动执行
+
+    |__ initialize() 1. 初始化参数 订阅 发布
+                     2. 初始化chi_squared_dist？ 不知道是什么
+    |__ imuCallback() 1. 保存数据到imu_msg_buffer
+                      2. 前两百次进行重力矫正
+        |__ initializeGravityAndBias()  1. gyro_bias方式比较简单
+                                        2. 通过自身的重力数值和先验重力得到一个对于东北天下的旋转阵
+    |__ featureCallback() 
+        |__ batchImuProcessing()
+            |__ self extractIMUinfo()
+            |__ processModel()          协方差三阶近似
+                                        姿态递推四阶龙格库塔
+                                        OC-modified State Transition

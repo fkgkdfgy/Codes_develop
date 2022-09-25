@@ -1,0 +1,8 @@
+ORBOptimizer 方法类
+    |__ mfGlobalBundleAdjustemnt() 全局BA
+        |__ mfBundleAdjustment     对Map内所有的KF 和MapPoint进行
+    |__ mfBundleAdjustment()
+        |__ SetVertexAndEdge
+        |__ Optimization
+        |__ RecoverVertex
+    |__ mf

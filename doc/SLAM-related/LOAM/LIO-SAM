@@ -1,0 +1,194 @@
+
+编译注意;
+使用gstam的版本为 4.0.0 而不是 4.0.2
+新版本存在编译报错的情况
+
+
+
+
+utility.h 实用类 其他类都是继承这个 有点意思 的确是节省代码
+    |__ ParamServer 负责各种参数？
+        |__ 重要memeber var 记述
+            |__ ext 系列             这个估计是到imu到 lidar 的坐标转换
+                |__ extRot
+                |__ extQRPY
+        |__ ctor() 各种参数的初始化
+        |__ imuConverter() imu_in田ext_imu ext_imu 未知
+                           感觉ext_Rot = R_imu_lidar  这个是绝对没有错的
+                              ext_RPY = R_lidar_imu  存疑 按下不表 但是好像没有使用 
+                                                     (imageProjection)
+        |__ publishCloud()
+        |__ imuAngular2rosAngular() 内容应该是 rosAngular2imuAngular 这里存疑
+        |__ imuAccel2rosAccel()     同样感觉方向有问题
+        |__ imuRPY2rosRPY()         同样的问题
+        |__ pointDistance()         单点求模，两天求距离
+
+
+imageProjection.cpp
+    |__ PointXYZIRT 对应Velodyne 的数据类 里面有一些 macro 的有趣使用
+        |__ PCL_ADD_POINT4D                  使用macro 包含了一个union 和一些转换函数 感觉是在适配Eigen
+            |__ PCL_ADD_UNION_POINT4D        一个union 
+            |__ PCL_ADD_EIGEN_MAPS_POINT4D   返回的都是Eigen::Map 用pcl包装了一下
+        |__ uint16_t ring
+        |__ time        
+        |__ EIGEN_MAKE_ALIGNED_OPERATOR_NEW  不知道是干什么的
+    |__ POINT_CLOUD_REGISTER_POINT_STRUCT    不知道是啥
+    |__ ImageProjection
+        |__ 输入
+            |__ imu_raw       初始imu信息
+            |__ points_raw    初始点云信息
+            |__ odometry/imu_incremental  imu 预积分量 和imu同频率
+        |__ 输出
+            |__ lio_sam/deskew/cloud_deskewed
+            |__ lio_sam/deskew/cloud_info
+        |__ 重要member var 记述
+            |__ subImu/Odom/LaserCloud(raw_point_cloud)   Odom是轮子而不是LidarOdom
+            |__ pubExtractedCloud/LaserCloudInfo
+            |__ rangeMat 深度图     还是row col 进行保存
+            |__ fullCloud          一维数组保存XYZI 点云数据
+            |__ imuTime/imuRotX/Y/Z imu数据队列 
+                                    imuTime 保存的是两个imuInfo 之间的时间差
+                                    
+                                    imuRotX/Y/Z 是递推角度 并且第一个值为0 
+                                    resetParameter 之后会进行全部置零
+                                    存储的是imu 在一个Scan时间内的递推
+                                    所以是一个相对的量而不是绝对量
+                                    imuRotX/Y/Z 是很正确的激光在世界坐标下的表示
+
+            |__ timeScanCur      Scan 开始时间
+            |__ timeScanEnd      Scan 结束时间
+            |__ cloudinfo                        和LeGo-LOAM 一样保存了大量的信息
+                |__ imuRoll/Pitch/YawInit        保存了每一个Scan 起始imuInfo 的 RPY
+                |__ initialGuessX/Y/Z/R/P/Y      均来自每一个Scan 起始Odom
+                |__ startRingIndex
+                |__ endRingIndex
+                |__ pointColInd
+                |__ pointRange
+                |__ cloud_deskewed/corner/surface cloud_deskewed 之中还包含着extractedCloud
+                |__ odomAvailable     判断initialGuessX/Y/Z/R/P/Y 是否有效
+                |__ imuAvailable      判断imuRoll/Pitch/YawInit  是否有效
+            |__ extractedCloud   取出掉无效点之后的PointCloud 保存XYZI信息
+            |__ increX/Y/Z       每个Scan 对应的OdomStart和OdomEnd 之间的位置差
+        |__ ctor()
+            |__ subAndPub()
+            |__ allocateMemory()
+            |__ resetParameters()
+            |__ setVerbosityLevel pcl 相关 不知道是干啥的
+        |__ imuHandler()
+            |__ imuConverter()
+            |__ saveInQueue()
+        |__ odometryHandler()
+        |__ cloudHandler()                      函数主体
+            |__ cachePointloud() 缓存数据 + 数据check
+            |__ deskewInfo()     
+                |__ makeImuInfoAlignWithScan()  就是要让imu数据时间戳能够包裹Scan的持续时间
+                |__ imuDeskewInfo()
+                    |__ discardUnusefulImuInfo()  丢弃过早imu数据
+                    |__ imuDeadReckon()           做IMUqueue 更新和递推
+                                                  -> ImuRotX/Y/Z
+                |__ odomDeskewInfo()              ->cloudInfo::initialGuessX/Y/Z/R/P/Y
+                    |__ discardUnusefulOdomInfo()
+                    |__ initCloudInfoForCorrespondingScan()
+                    |__ IfEndOdomEnough()
+                    |__ calculateOdomIncreX/Y/Z() ->increX/Y/Z
+            |__ projectPointCloud()
+                |__ deskewLidarPoint()          这个还是把激光点转移到了Scan第一点时插值的所产生的坐标系下
+                    |__ findRotation()          imuRotX/Y/Z 插值
+                    |__ findPosition()          可选不用odom 进行递推 如果是慢速可以当作匀速运动进行插值
+                |__ saveRangeMatAndFullCloud()  -> rangeMat -> fullCloud 
+            |__ cloudExtraction()
+            |__ publishClouds()                 发送点云和cloudinfo
+            |__ resetParameters()               重置imuRotXYZ 等参数设置
+
+imuPreintegration.cpp     TransformFusion 应该是来自 LeGo-LOAM 的transFusion
+                                          和imuPregration 没有太大的相关性
+                          目前看需要学习一下gtsam
+    |__ TransformFusion           看名字是一个融合模块 结论就是没啥用 可以先不管
+        |__ 输入
+            |__ lio_sam/mapping/odometry  来自mapOptimization 的odom
+            |__ odometry/imu_incremental  预积分量
+        |__ 输出
+            |__ odometry/imu              预积分量 没啥用
+            |__ lio_sam/imu/path          这个没啥用
+        |__ 重要member var记述
+            |__ lidarOdomAffine   从lidarHandler 那里得到的Odom 的转换值
+            |__ lidarOdomTime     对应LidarOdomAffine 的时间戳
+        |__ ctor()                基本的各种初始化和sub、pub
+        |__ lidarOdometryHandler()一个简单的类型转换
+        |__ imuOdometryHandler()
+            |__ saveInQueue()
+            |__ discardUnusefulOdomInfo()
+            |__ predictLaserOdomWithOdomData()
+            |__ pubPredictLaserOdom()
+            |__ pubtf()            以下两项没有仔细看
+            |__ pubIMUpath()
+    |__ IMUPreintegration        一看名字就是IMU预积分模块
+        |__ 输入
+            |__ lio_sam/mapping/odometry  来自mapOptimization 的odom
+            |__ imu_raw                   imu_raw 信息
+        |__ 输出
+            |__ odometry/imu_incremental  预积分量
+            |__ lio_sam/imu/path          这个没啥用
+        |__ 重要member 记述
+            |__ 
+        |__ ctor()
+            |__ subAndPub()
+            |__ setNoiseAndCovariance()
+        |__ odometryHandler()      
+            |__ fromROSodomToEigenAffline()
+            |__ saveTimeStamp()
+        |__ imuHandler()
+
+
+featureExtraction.cpp
+    |__ 输入 lio_sam/deskew/cloud_info  去畸变之后的点云
+    |__ 输出 lio_sam/feature/cloud_info
+            lio_sam/feature/cloud_corner
+            lio_sam/feature/cloud_surface
+    |__ 重要member var 记述
+    |__ ctor()
+    |__ laserCloudInfoHandler()
+        |__ calculateSmoothness()
+        |__ markOccludedPoints()
+        |__ extractFeatures()         提取Edge 和Surface 的点方式比之前简单了 依旧六个部分
+        |__ pubpoincloud()            cloud_info的 cloud_corner 和cloud_surface 被附上线面点云
+
+mapOptimization.cpp       想读懂的话问题还是坐标系转换上 还有一个解析ICP
+    |__ 输入
+        |__ lio_sam/feature/cloud_info
+        |__ gpsTopic
+    |__ 输出
+        |__ lio_sam/mapping/odometry_incremental  一大堆输出就这一个有用
+    |__ 重要member var 记述
+        |__ transformTobeMapped        lidar->world 坐标转换
+        |__ lastImuTransformation predict pose
+    |__ laserCloudInfoHandler() 函数主体 方法基本没有变化
+        |__ updateInitialGuess()     给transfromTobeMapped 进行预测
+                                     有合适的预积分用预积分 预测
+                                     没有则使用imu预测 rotation
+        |__ extractSurroundingKeyFrames()
+        |__ downsampleCurrentScan()
+        |__ scan2MapOptimization()
+        |__ saveKeyFramesAndFactor()
+            |__ keyframeCheck()
+            |__ isamUpdate()
+            |__ ifALoopUpdate()
+            |__ addIntocloudKeyPoses6D/3D()
+        |__ correctPoses()
+        |__ publishOdometry()             里面有一手匹配之后和imu进行混合的操作，不是很懂
+                                          但是只修正了roll 和pitch  yaw估计是imu不准的原因
+                                          所以没有进行修正
+                                          这里的修正算是一个细节点，之后还是要多琢磨琢磨
+            |__ pubGlobal()               正常发布TransfromTobeMapped
+            |__ pubincremental            目前认为在数值上进行imu信息的修正之后
+                                          发了一个TransformTobeMapped 类似的值
+                                          
+    |__ loop 回环基本没有变化
+学一手gtsam 再来看吧
+
+=============================================================
+重要：
+注： odomFrame 和mapFrame 绑在一起的
+也就是说OdomFrame 就是 mapFrame 
+注： 要注意Lego-LOAM 和LIO-SAM 的差别并找出工程上的trick 需要在细节上在看一下
+    构建细节trick库

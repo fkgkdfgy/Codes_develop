@@ -1,0 +1,102 @@
+============================= from pcl ======================================
+Registration
+    |__ hits from typedef
+        |__ Kdtree 正反Kdtree
+        |__ PointCloudSource
+        |__ PointCloudTarget
+        |__ TransformationEstimation
+            |__ 一个匹配基类 用于估算 source target 之间的transformation
+                内含多种匹配模式
+        |__ CorrespondenceEstimation
+            |__ 点云对应关联生成基类
+    |__ main member
+        |__ setTransformationEstimation 设置求解器 类似 求解 SVD 等等内容的东西
+        |__ setCorrespondenceEstimation 设置关联生成器
+        |__ get/set + Target/source
+        |__ set + 各种参数 
+        |__ registerVisualizationCallback 疑似点云匹配的可视化 过程
+        |__ getFitnessScore 得到匹配分数 欧式距离 加和
+        |__ getFinalTransformation 得匹配结果
+        |__ align() 主体匹配函数
+            |__ initCompute()
+            |__ extractInputPointsWithIndics() 也就是提纯Source 点云
+            |__ computeTransformation() =0 正式计算 也就是真正的函数主题
+
+NDT：public Registration
+    |__ hits from typedef
+        |__ VoxelGridCovariance Voxel with mean and covariance 分割函数
+    |__ main member
+        |__ setInputTarget 会进行一次Voxel 计算
+        |__ get/set + OutlierRatio 预测有RANSAC
+        |__ get/set + StepSize/Resolution  Resolution 会init()进行网格重置计算
+        |__ init()
+        |__ computeTransformation
+            |__ initialization c 和d 目的目前看来和鲁棒核一致
+            |__ while converge
+                |__ for each input_point
+                    |__ radiusSearch() Faster than neighbor checking
+                        而且细节上使用了 radius 进行的搜索 也就是说同一个点
+                        可以关联多个voxel 
+                        然后对每一个关联的voxel 都进行得分 求导等计算
+                    |__ for each Voxel
+                        |__ UpdateDerivatives 更新 J H
+                |__ Update delta_T
+                |__ TransformPointCloud
+
+========================== from Github ========================================
+NDT_omp 代码阅读
+
+VoxelGridCovariance 系列
+
+    |__ Filter
+        |__ getRemovedIndices
+        |__ filter 滤波主体 
+            |__ applyfilter()=0 函数主体
+    |__ VoxelGrid
+        |__ set/getLeafSize
+        |__ set/getDownSampleAllData
+        |__ set/getMinimumPointsNumberPerVoxel
+        |__ get(Max)MinBoxCoordinates 得到最大最小边界
+        |__ getNrDivisions() 已知是每个坐标轴上voxel的个数
+        |__ getDivisionMultiplier() 用于点乘还获得一维坐标(CentroidIndex)
+        |__ get(Neighbor)CentroidIndex 得到对应的格子坐标
+                                       neighbor 的坐标是相对于reference point 的 坐标
+        |__ applyfilter() 
+            这里的调用是通过直接调用Base::filter 因为VoxelGrid 里面没有重名的函数
+            filter依旧使用Base 的形式 但是 applyfilter 虚函数产生替换 
+            |__ initializeParam() min_b_ max_b_ div_b_ div_mul_
+            |__ voxelizePoint() 对点云进行Voxel 分割
+            |__ getCentoridinEveryVoxel() 得到各个Voxel的点云中心
+    |__ VoxelGridCovariance
+        |__ struct Leaf 包含每一个Voxel 的mean covar inverse_convariance
+                                        eigen_vector eigen_value
+        |__ set(get)MinPointPerVoxel
+        |__ getLeaf()
+        |__ set(get)CovEigValueInflationRatio
+        |__ getNeighborhoodAtPoint 得到附近的 reference_point 附近的 内部点数大于voxels
+            |__ 四种 getNeighborhoodAtPoint 26 个 Voxel
+                    getNeighborhoodAtPoint7 7 个 Voxel 
+                    getNeighborhoodAtPoint1 1 个 Voxel
+        |__ getLeaves
+        |__ getCentroids
+        |__ nearestKSearch K 最近邻搜索
+        |__ radiusSearch 
+        |__ applyfilter
+            |__ initializeParam() min_b_ max_b_ div_b_ div_mul_
+            |__ voxelizePointAndCalcualteMeanCovariance() 
+                对点云进行Voxel 分割 并计算 均值和方差
+            |__ calculateEigen() 计算特征向量和特征值
+
+
+ndt_omp 系列
+    |__ setNumThreads
+    |__ computeTransformation 代码阅读之后发现 
+        优化的部分就是在计算导数的部分使用了omp 进行并行计算
+        |__ initialization c 和d 目的目前看来和鲁棒核一致
+        |__ transformPointCloudWithGuess
+        |__ computeDerivatives() 矩阵更新主体
+            |__ initialization() 准备vector<hessian>\vector<score_gradient>
+            |__ ComputeAngleDerivatives() 
+
+                
+                    

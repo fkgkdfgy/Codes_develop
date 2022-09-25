@@ -1,0 +1,8 @@
+KeyFrameDB 主要功能是用于回环检测
+    |__ 重要member var
+        |__ mpVoc   预先训练好的辞典
+        |__ mvInvertedFile ? 存疑
+    |__ add()
+    |__ erase()
+    |__ DetectLoopCandidates()            用于回环
+    |__ DetectRelocalizationCandidates()  用于重定位

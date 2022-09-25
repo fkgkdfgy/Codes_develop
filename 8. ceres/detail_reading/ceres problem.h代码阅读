@@ -1,0 +1,119 @@
+重点关注
+
+    problem.h 正式阅读版
+            |__ 重要member 记述
+                |__ problem_impl 算法实现类
+                |__ EvaluateOptions
+                    |__ parameters_block
+                    |__ std::vector<ResidualBlockId> residual_blocks; 
+                        注 这里的ReisudalBlockId 也就是一个ResidualBlock *
+                |__ friendClass
+                    |__ Solver
+                    |__ Covariance
+            |__ AddResidualBlock(CostFuction,LossFunction,var...)
+                最终都是使用problem_impl->AddResidualBlock(CostFuction,LossFunction,vector<double *>)
+                |__ parameterBlockNumCheck()
+                |__ duplicateParameterBlockCheck()  检查 vector<double*> 里面有没有重复的内存区域
+                |__ for_each parameter_block:parameters_blocks
+                    |__ InternalAddParameterBlock(double* parameter_block,size) 
+                        检查 parameter_block_map<double * ,ParameterBlock*> 如果没有重复的就创建存在于program_,返回ParameterBlock*，
+                        有重复的就check size之后返回已存在的parameter_block
+                |__ createResidualBlock(vector<ParameterBlock *>,costfunction )
+                    并存入program_
+                |__ CostFuctionRefCount++,LossFunctionRefCount++
+            |__ AddParameterBlock(double*,size,LocalParameterization)
+                |__ 调用 problem_impl->AddParameterBlock(values, size, local_parameterization)
+                    |__ InternalAddParameterBlock(double* parameter_block,size) 
+                    |__ problem->setLocalParameterization()
+                现在看起来这个有没有好像没啥关系，只是减少部分函数调用的消耗
+            |__ SetParameterBlockConstant(double* values)   设置ParameterBlock 在优化的时候是否更新
+            |__ SetParameterBlockVariable(double* values)
+            |__ ... 之后都是根据double * 来进行搜索，获得getNum 之类的函数
+            |__ Evaluate(const EvaluateOptions& options,
+                        double* cost,
+                        std::vector<double>* residuals,  不知道为什么不用double* 了 但是vector内部内存连续，倒也无所谓了
+                        std::vector<double>* gradient,
+                        CRSMatrix* jacobian)             评价主体函数
+                内部继续调用problem_impl->Evaluate(...)来执行
+                |__ initialize parameter_blocks 
+                    如果没有提供options，就使用 program_ 的underlying
+                |__ unqiuelyCollectAllVariableParameter() 唯一地得到所有ParameterBlock
+                |__ useProgramEvaluatorToComputeCost/Residual/Gradient/JacobianMatrix
+                    这里的计算就是调用 ResidualBlock->Evaluate(...) 进行计算
+
+                    注： ProgramEvaluator 是一切优化的核心组件，负责计算各种Cost/Residual/Gradient/JacobianMatrix，
+                                                            负责 LocalParameterization 的Plus
+
+==================================================================================================================
+
+    program.h
+            |__ Plus() 调用LocalParameterization 进行使用，并且内部根据 lower bound 和upper bound 对变量进行限制
+    SizedCostFunction 
+            |__ 在ctor 的时候确定reidual的维数 和 params 每个块的大小 并把大小压入vector<int>
+    
+    ResiudalBlock
+            |__ Evaluate(bool apply_loss_function, 函数主体
+                        double* cost,
+                        double* residuals,
+                        double** jacobians,       每一个jacobians[i] 都是用一段连续内存对jacobian 进行存储
+                        double* scratch)          目前sratch 未知 
+                                                  感觉就是只是一段空间
+                |__ 使用FixedArray 对 parameters 和 jacobians 进行包装
+                    这也是为什么会出现，double ** 的原因
+                    所以实际上ParameterBlock 和 JacobianBlock 的数据存储都是在一段连续的内存上的 (真相大白)
+                    
+                |__ cost_function_->Evaluate(const double ** params,double * residaul, double ** jacobians)
+
+                    这里就是对应上了CostFunction 的Evalutate double ** jacobians 来自FixedArray 内存连续
+                                                          double ** params    来自FixedArray 内存连续
+                                                          
+                |__ LocalParameterization 存在的时候对jacobians 进行更新 
+                    在这个时候global_jacobians 和 local_jacobian 之间的关系就出现了
+                    global_jacobian * local_jacobian = 最终jacobian
+                    这里相乘的顺序也是确定的了： 是 global_jacobian * local_jacobian
+                    注： 在Fixed_array 进行包装的时候，可以知道，一开始的所有jacobianBlock数据 内存是放在 sratch这一段连续内存中的
+                    然后，最终的jacobian 还是保存在了 double ** jacobians 里面 
+                |__ 如果有LossFunction 对 最终jacobian 和 residual 进行纠正
+                    使用了Corrector 来进行纠正 这里就使用上了 double * rho
+                
+    FixedArray<T,int default_size>
+            |__ ctor() 内进进行内存分配在 InnerContainer * 指向的一段连续内存中
+
+    program_evaluator.h
+            |__ bool Evaluate(const Evaluator::EvaluateOptions& evaluate_options,
+                                const double* state,
+                                double* cost,
+                                double* residuals,
+                                double* gradient,
+                                SparseMatrix* jacobian)     这个是对residual 的Evaluate 和Add 的一个集中调用
+                |__ 
+    到此 LocalParameterization 的Jacobian 已经被用起来了
+    也对 这个内容有了一个大概的了解
+    
+    LocalParameterization
+            |__ ComputeJacobian 在计算代码的时候进行链接
+                真正在计算的时候使用的是 LocalSize
+            |__ Plus 的位置也已经被找到了
+    之后的主要目标是对于 solve 的阅读
+    主要是是对于四元数流程求解的学习
+    
+    之后，还有LocalParameterization 的ADD 和算法的整套流程
+
+    总结下来： 如果对于流形上的优化，如果不想写LocalParameter 的ComputeJacobian 那么，就需要在AnalysticDiff 里面把所有工作完成
+                                                                              但这样也还是需要写LocalParameterization 的Plus
+
+
+    流形的优化过程
+                    —> CostFunction          ->Evaluate        -> GlobalJacobian ——
+                   |                                                               |
+    ResiudalBlcok——                                                                 —>    LossFunction×Global_J × Local_J = Final_J
+                   |                                                               |
+                    —> LocalParameterization ->ComputeJacobian -> LocalJacobian  ——
+
+    流形的更新过程
+
+    优化的计算-> delta_local_var -> LocalParameterization ::Plus(last_global_var,delta_local_var,new_global_var)
+            -> 得到新的global_var 然后就可以投入CostFunction 进行计算
+
+
+    https://blog.csdn.net/u014033218/article/details/88680720 Jacobian 在优化时的使用

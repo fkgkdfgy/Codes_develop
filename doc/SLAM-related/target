@@ -1,0 +1,10 @@
+VINS ORB_SLAM 
+|__ 初始化、回环融入、g2o 边缘化、VINS ceres 边缘化、外参标定、在线标定、特征管理策略
+LDSO SVO LSD
+|__ 深度滤波、特征管理、概率建模、光流
+BASALT GoodFeature
+|__ 子图、帧、特征的筛选
+MSCKF 
+|__ 特殊的后端、OC-EKF、FEJ
+StructVIO 
+|__ 亚特兰大、曼哈顿假设、线匹配

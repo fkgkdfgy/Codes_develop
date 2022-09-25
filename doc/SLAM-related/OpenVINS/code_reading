@@ -1,0 +1,15 @@
+VioManager 从ctor 可以看出一共是以下几个组件
+TrackKLT
+TrackDescriptor
+TrackAruco
+Propagator
+InertialInitializer
+UpdaterMSCKF
+UpdaterSLAM
+UpdaterZeroVelocity
+
+
+从运行函数
+ros_serial_msckf 来看 主要就是 以下两个函数
+feed_measurement_imu
+feed_measurement_stereo

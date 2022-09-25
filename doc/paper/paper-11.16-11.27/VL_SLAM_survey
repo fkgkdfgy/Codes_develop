@@ -1,0 +1,73 @@
+
+来自论文：
+A Review of Visual-LiDAR Fusion based SLAM
+
+Visual-Lidar SLAM
+
+EKF Hybridized SLAM
+    |__ The work in [64] proposed a new expression of EKF using data association, 
+        leading to an improvement in SLAM accuracy
+        ->
+        Research on active SLAM with fusion of monocular vision and laser range data. 
+
+    |__ The work in [65] also offered an RGB-D camera with LiDAR EKF SLAM. The main purpose of this
+        work was to tackle the issue of unsuccessful visual tracking. 
+        但好像事提供了一种这种传感器交替的module
+        ->
+        SLAM of Robot based on the Fusion of Vision and LIDAR.
+
+    |__ The work in [66] integrated different state-of-the-art SLAM algorithms based on vision and inertial measurement using EKF on a
+        low cost hardware environment for micro aerial vehicles.
+        文章中融合的是2d 激光生成 2.5D地图
+        ->
+        Simultaneous Localization and Mapping (SLAM) System for Low-Cost Micro Aerial Vehicles in GPS-Denied Environments
+================================================================================================================
+Improved Visual SLAM 使用Lidar 深度增强视觉感觉可以先不读
+================================================================================================================
+Improved LiDAR SLAM
+    |__ Liang et al. [73] enhanced the poor performance of a LiDAR based SLAM using scan matching
+        with a visual loop detection scheme using ORB features. 
+        感觉只是使用ORB进行回环
+        ->
+        Visual laser-SLAM in large-scale indoor environments.
+
+    |__ In [74], a 3D laser based SLAM was associated with a visual method to perform loop
+        detection through a keyframe based technique using visual bags-of-words. Furthermore, Iterative
+        Closest Point (ICP) can be optimized using LiDAR-camera fusion.
+        LoopClosure 使用词袋    ICP 也有 Lidar 和 camera 融合
+        ->
+        Loop Detection and Correction of 3D Laser-Based SLAM with Visual Information
+
+    |__ The work in [75] used visual information to make an initial guess for rigid transformation that
+         was used to seed a generalized ICP framework
+        Camera 用于 GICP匹配初值估计
+        ->
+        Visually bootstrapped generalized ICP.
+============================================================================
+Concurrent LiDAR-Visual SLAM
+    |__ The work in [76] proposed to use both visual and LiDAR measurements by 
+        running in parallel SLAM for each modality and
+        coupling the data. This was done by using both modalities’ residuals during the optimization phase.
+        激光和视觉共同优化
+        ->
+        A Tight Coupling of Vision-Lidar Measurements for an Effective Odometry.
+    |__ LIC Fusion
+        激光和视觉一起优化一些平面
+        ->
+        LIC-Fusion2.0: LiDAR-Inertial-Camera Odometry with Sliding-Window Plane-Feature Tracking
+    |__ Zhang et al. [77] combined their previous works to design VLOAM. This visual-LiDAR odometry
+        performs high frequency visual odometry and low frequency LiDAR odometry to refine the motion
+        estimate and correct the drift.
+        视觉当作IMU 使用 
+        ->
+        Visual-lidar Odometry and Mapping: Low-drift, Robust, and Fast. 
+
+    |__ Maybe the most tight fusion currently available was proposed in [78], where a graph optimization
+        was performed, using a specific cost function considering both laser and feature constraints. Here,
+        both the laser data and image data could obtain the robot pose estimation. A 2.5D map was also built
+        to accelerate loop detection.
+        激光和视觉一起优化   感觉像是2d的激光
+        ->
+        A Simultaneous Localization and Mapping (SLAM) Framework for 2.5D Map Building Based on Low-Cost LiDAR and Vision Fusion
+        简单的融合
+

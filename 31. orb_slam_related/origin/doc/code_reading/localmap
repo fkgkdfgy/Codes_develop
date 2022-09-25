@@ -1,0 +1,44 @@
+LocalMapping
+    |__ 重要member var 记述
+        |__ mlNewKeyFrames              存储等待处理的新关键帧
+        |__ mlpRecentAddedMapPoints     新添加进来的MapPoint
+    |__ interface
+        |__ mfRun()         主体函数    
+            |__ mfSetAcceptKeyFrames()  设置是否接受新的关键帧
+            |__ mfCheckNewKeyFrames()   内部使用mCurrentKeyFrame和 旧KF进行三角化匹配后，
+                                        根据匹配关系生成新的三维点 和 MapPoint
+            |__ mfProcessNewKeyFrame()  计算描述子、添加vpMapPointMatches的观测、
+                                        把keyFrame 添加到Map 中
+                                        对于新生成的点添加到mlpRecentAddedMapPoints 留待之后进行检验
+            |__ mfMapPointCulling()     目前来看还是相对暴力的检验方法
+                                        不好的点会被SetBadFlag()
+            |__ if mfCheckNewKeyFrames
+                |__ mfSearchInNeighbors() ？？ 存疑这里的逻辑还是有一些问题
+            |__ mfCreateNewMapPoints()  相机运动过程中和共视程度比较高的关键帧，
+                                        通过三角化恢复出一些MapPoints
+                |__ GetHighCovisualabilityKeyFrame()    得到更高共视关系的关键帧
+                |__ for each KeyFrame
+                    |__ checkBaseLine() check1
+                    |__ for each MapPoint match with mCurrentKeyFrame
+                        |__ Triangulate()
+                        |__ checkReProjectionError() check2
+                        |__ checkPymirdScaleRatio()  check3
+                    |__ CreateNewMapPoint()             产生新的MapPoint 并将其加入mlpRecentAddedMapPoints
+                                                        留着之后MapPointCulling的时候进行检查
+                                                        遗留问题
+                                                        之前在MapPointCulling 的时候就已经对mCurrentFrame的mvMapPoint 进行过一次Culling操作了
+                                                        为什么之后又要进行一次这样三角化之类的操作
+                                                        需要写一个流程把关键帧的提取匹配加入的流程进行一次梳理??!!!
+            |__ LocalBundleAdjustment()
+            |__ mfKeyFrameCulling()     根据一个启发式的重复率上的统计，来消除一些重复性过高的关键帧
+        |__ InsertKeyFrame()            外部插入函数
+    |__ Bool操作(Sync)       
+        
+
+tips:
+关于什么点会被MapPointCulling？
+CurrentFrame 在Tracking 中新生成的自己新观测到的点
+CurrentFrame 在LocalMapping 当中 CreateNewMapPoints()生成的点
+
+关于什么样的点会被永久留在Map里面？ 
+连续跟踪成功三次的点

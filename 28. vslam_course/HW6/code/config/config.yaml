@@ -1,0 +1,36 @@
+%YAML:1.0
+
+### 这个参数 用于 00001 ～ 00005  Direct Method 可以实现比较好的效果
+# TrackerBaseOptions.Level: 7
+# TrackerBaseOptions.TemplateSize: 4
+# TrackerBaseOptions.Scale: 0.6
+
+### 这个参数 用于 00003 - 00004 光流匹配可以实现比较好的效果 车体部分匹配有问题 耗时大概是opencv 的3倍
+### opencv 的匹配在车体的部分匹配的比较好，不知道为什么
+TrackerBaseOptions.Level: 7
+TrackerBaseOptions.TemplateSize: 21
+TrackerBaseOptions.Scale: 0.6
+
+### left right 匹配使用的参数
+# TrackerBaseOptions.Level: 7
+# TrackerBaseOptions.TemplateSize: 21
+# TrackerBaseOptions.Scale: 0.6
+
+TrackerBaseOptions.MaxIterations: 20
+
+
+
+LKTracker.Inverse: 0
+LKTracker.Source: "./picture/000003.png"
+LKTracker.Target: "./picture/000004.png"
+
+# 并行的设置在 LK_slef_tracker.h 中进行设置
+
+DirectTracker.Camera.fx: 718.856
+DirectTracker.Camera.fy: 718.856
+DirectTracker.Camera.cx: 607.1928
+DirectTracker.Camera.cy: 185.2157
+DirectTracker.Camera.baseline: 0.573
+
+DirectTracker.nPoints: 1500
+DirectTracker.boarder: 20 

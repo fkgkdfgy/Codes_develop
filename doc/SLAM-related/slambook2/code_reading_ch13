@@ -1,0 +1,49 @@
+FrontEnd
+    |__ 重要member var 记述
+        |__ camera_left_          左右相机存储相机模型和外参
+        |__ camera_right_        
+        |__ 多种 num_feature       各种阈值
+        |__ gftt_                 opencv 的特征提取
+        |__ relative_motion_      与上一帧的相对运动
+    |__ interface
+        |__ AddFrame()            主要接口 
+            |__ StereoInit()
+            |__ or Track()
+            |__ or Reset()
+            |__ last_frame_ = current_frame_
+        |__ 各种set 和get()
+    |__ internal
+        |__ StereoInit()
+            |__ DetectFeatures()        利用mask 分散的找点
+            |__ FindFeaturesInRight()   LK找左右匹配点内部光流实现
+            |__ BuildInitMap()          生成地图  三角化 创建MapPoint
+        |__ Track()
+            |__ current_frame_          预估一下新的移动
+                ->SetPose(relative_motion_ * last_frame_->Pose())
+            |__ TrackLastFrame()        新的左目图像和LastFrame的左目进行LK匹配
+            |__ EstimateCurrentPose()   利用在TrackLastFrame中关联上的MapPoint 估计位姿
+                                        并在优化之后进行一次 check outlier
+            |__ self StateCheck()       根据匹配上的点数确定状态
+            |__ InsertKeyframe()        添加关键帧
+                |__ SetObservationsForKeyFrame()  为从LastFrame关联的MapPoint 添加观测
+                |__ DetectFeatures()    
+                |__ FindFeaturesInRight()
+                |__ TriangulateNewPoints() 用新发现的左右匹配生成MapPoint
+            |__ relative_motion_ = 
+                current_frame_->Pose() * last_frame_->Pose().inverse();
+
+并没有一个全图匹配
+tips: BDCSVD JacobianSVD的差别
+<16 维使用 JacobianSVD 更大的用BDCSVD
+tips: weak_ptr 的用法
+weak_ptr是弱智能指针对象，它不控制所指向对象生存期的智能指针，
+它指向由一个shared_ptr管理的智能指针。
+将一个weak_ptr绑定到一个shared_ptr对象，不会改变shared_ptr的引用计数。
+一旦最后一个所指向对象的shared_ptr被销毁，所指向的对象就会被释放，
+即使此时有weak_ptr指向该对象，所指向的对象依然被释放。
+
+
+
+BackEnd
+    |__ g2o 随时优化 并且会根据 error 大小进行 inliner check
+        |__ 仿ORB设计采用BA进行优化

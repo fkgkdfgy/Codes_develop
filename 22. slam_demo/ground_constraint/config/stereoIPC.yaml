@@ -1,0 +1,37 @@
+%YAML:1.0
+
+
+# Tracking.LocalKeyFrameNum: 80
+
+# # LocalMapMatchesInliers1 should be larger than LocalMapMatchesInliers2
+
+# Tracking.LocalMapMatchesInliers1: 50
+# Tracking.LocalMapMatchesInliers2: 30
+
+# Tracking.ParamIdex: 1
+# ===================================== Experiment 1 ===========================================
+
+
+
+Tracking.LocalKeyFrameNum: 40
+
+# LocalMapMatchesInliers1 should be larger than LocalMapMatchesInliers2
+Tracking.LocalMapMatchesInliers1: 40
+
+# 这个参数是跟踪连续性的保证 跟踪连续性越好,但是精度会有限制
+# 如果算力充足,这个参数可以设置大一些
+Tracking.LocalMapMatchesInliers2: 30
+Tracking.ParamIdex: 2
+
+Tracking.TcwInit:  !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data: [-0.006991706225913804, 0.01185740630776786, -0.9999052544914957, -0.153,0.9999718687071296, 0.002798998314322104, -0.006958980012010533, -0.033,0.002716217668313467, -0.999925781007815, -0.0118766425175389, 0.37,0, 0, 0, 1]
+
+Optimizer.GroundConstraintInfo: 4000.0
+Optimizer.StoragePath: "./Examples/Stereo/T.txt"
+Optimizer.InfoName: "PoseTransform.Transform"
+
+ImageGrabber.tf: 0
+SLAMSystem.View: 1

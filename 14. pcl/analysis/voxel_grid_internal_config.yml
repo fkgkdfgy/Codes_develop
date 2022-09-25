@@ -1,0 +1,4 @@
+LineRatio: 3.0
+LinePointThreshold: 40
+VertexEigenValueThreshold: 1.0
+VertexPointThreshold: 20

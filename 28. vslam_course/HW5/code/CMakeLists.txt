@@ -1,0 +1,16 @@
+project(HW5)
+cmake_minimum_required(VERSION 3.5)
+set(CMAKE_CXX_FLAGS "-std=c++14")
+set(CMAKE_BUILD_TYPE "Debug")
+include(../../../cmake/opencv.cmake)
+# ceres 的eigen版本应该和eigen3.cmake 的版本存在冲突
+# include(../../../cmake/eigen3.cmake)
+include(../../../cmake/sophus.cmake)
+include(../../../cmake/PCL.cmake)
+include(../../../cmake/ceres.cmake)
+include(../../../cmake/pangolin.cmake)
+
+add_executable(ORB computeORB.cpp)
+add_executable(E2Rt E2Rt.cpp)
+add_executable(GN GN-BA.cpp)
+add_executable(icp icp.cpp)

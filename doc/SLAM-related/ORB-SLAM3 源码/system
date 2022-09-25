@@ -1,0 +1,9 @@
+System
+    |__ ctor()
+        |__ LoadSettingAndBWod()
+        |__ createAtlas\Drawer\LocalMapper\Tracker  LocalMapper 和 mpLoopClosing 单独开线程 
+            \LoopCloser
+    |__ TrackMonocular(im,tImu,vImuMeas)        main 的住调用函数，也是函数入口
+        |__ checkMode()                         猜测是纯定位开关
+        |__ TrackerGrabImageAndImuInfo()
+        

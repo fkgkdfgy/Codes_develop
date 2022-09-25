@@ -1,0 +1,35 @@
+
+
+第一部分 构建CostFunction
+struct Functor 编写部分 问题主要是在operator() 上面
+    |__ 1. operator() 是一个template<typename T>的成员函数模板
+    |__ 2. operator() return bool
+    |__ 3. operator() 函数有const 限定，不加一定会报错
+    |__ 4. 一般使用创造者模式，直接返回一个CostFunction*
+    |__ 5. 和Eigen结合的问题 (主要参考cartographer的ceres_mathcher)
+        |__ 5.1 vector 或者 Array 直接使用Matrix<typename T,int rows,int cols> 来进行操作
+
+第二部分 构造整体的问题
+主要问题
+    |__ AutoDiff <typename 构建CostFunction,int input_1,...input_9,int output>
+        (具体构造形式看demo)
+    |__ 什么时候使用 Auto Numerical 和 Analytic
+        |__ Analytic 性能第一,且明确公式推导,且不嫌烦
+        |__ Numerical 不能使用Auto的时候, 三方库基本并不适配Jet
+        |__ Auto 最方便 嘿嘿嘿
+        
+第三部分 配置求解器
+    |__ Solve 的命名空间是 ceres 而不是 ceres::Solver 因为Solver 内部也有一个叫Solve的成员函数
+
+
+
+LocalParameterization ComputeJacobian() 的意思  寻根完成
+    这里ComputeJacobian 什么时候使用还不明确
+    但是对于Sophus 已经有对于quternion 的表示了
+    +
+    经过查阅还是和 AutoDiff 联合进行使用当中进行使用
+    所以范帝楷 没有编写ComputeJacobian 因为在AnalyticDiff 当中根本用不上
+    但是我自己编写的内容当中含有AutoDiff 应该会对结果产生影响，明天进行验证
+    +
+    之后定位到ResidualBlock 之中进行使用
+

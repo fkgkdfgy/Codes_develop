@@ -1,0 +1,94 @@
+LBA  LocalBundleAdjustment 探索
+LocalMap   这个东西相当于 LocalBA 的信息存储结构
+    |__ class CameraLF  对应局部帧
+        |__ m_C         Camera 存储Camera 的 5个状态量
+        |__ m_iFrm      id
+        |__ m_uc        好像是一个是否更新的 bool ,已经确认是用于表示在 LBA_Update 是否对齐进行更新的bool
+    |__ class CameraKF  对应关键帧
+        |__ m_e         地图点的重投影误差
+        |__ :public Camera 
+        |__ m_uc        
+        |__ m_Cam_pose
+        |__ m_iFrm
+    |__ member var
+        |__ list<CameraLF>                      m_CsLF   滑窗内，所有相机状态, 在LBA_update 的时候，不在滑窗内的LF 会被pop_out
+        |__ vector<CameraKF>                    m_CsKF   所有关键帧相机状态
+        |__ std::vector<Depth::InverseGaussian> m_ds     所有地图点对应的深度
+                                                         内部保存的是KF的MapPoint 的深度
+                                                         size()和KF数量的关系和 m_iKF2d 对应
+        |__ vector<int>                         m_iKF2d  这里存储的数值，实际上是每一个KF带来的MapPoint的数量计数
+                                                         ie. [1] = 70 等到第一关键帧加入已经有70个MapPoint了
+                                                            [2] = 140 等到第二关键帧加入就有了140个MapPoint
+        |__ ubyte                               m_Uc     表示在滑窗内是否有更新发生，在LBA_update内进行修改
+        |__ vector<ubyte>                       m_uds    确认是是否对深度进行了更新的bool
+                                                         size()和KF数量的关系和 m_iKF2d 对应
+        |__ shared_mutex                        m_MT     读写锁
+    |__ member func                             
+        |__ IBA_Reset()                重置
+        |__ IBA_PushLocalFrame()       把CameraLF    丢进 m_CsLF
+        |__ IBA_PushKeyFrame()         把KF          丢进 m_CsKF 以及m_iKF2d地图点历史数量的更新、m_ds进行更新、m_uds 进行更新
+                                       不知道为什么 没有保存像素信息
+        |__ IBA_DeleteKeyFrame()       把KF          从 m_CsKF 删除 更新 m_iKF2d m_ds m_uds 数据
+        |__ IBA_Synchronize()          和LBA中数据同步,用来获得LBA中的滑窗中的相机状态,关键帧的相机状态以及所有的地图点
+                                       不过内容还没有看
+        |__ LBA_Update()               1. 调整滑窗内的LF 也就是 m_CsLF 不在滑窗内的LF 会被删除
+                                       2. 更新KF 位姿 MapPoint 深度(m_ds) 更新 m_uds
+
+
+LocalBundleAdjustor
+    |__ member var
+        |__ list<InputLocalFrame>          m_ILFs1             LBA 用于保存普通帧
+        |__ list<InputType>                m_ITs1              对应标签显示是Local_Frame 还是Key_Frame
+                                                               这里的Tag和KF 已经LF 的存储对应关系，
+                                                               目前存疑，需要后续check!!!
+        |__ list<GlobalMap::InputKeyFrame> m_IKFs1             LBA 用于保存关键帧
+        |__ std::list<int>                 m_IDKFs1, m_IDKFs2  删除关键帧？存疑
+        |__ AlignedVector<Rigid3D>         m_CsKFBkp           关键帧位姿备份 备份m_CsKF
+        |__ AlignedVector<Camera>          m_CsLFBkp           普通帧位姿备份 备份m_CsLF
+    |__ class InputLocalFrame
+        |__ Camera                         m_Cam_state         存储相机状态 pvq bias
+        |__ m_imu_measures                 m_imu_measures      原始imu测量
+    |__ class CameraLF
+        |__ Camera                         m_C                 相机状态
+        |__ Tag                            m_T                 Tag
+    |__ class MeasurementMatchLF
+        |__ class index
+            |__ int                        m_ik                存疑
+            |__ int                        m_IKF               KF 序号                       
+        |__ vector<Index>                  m_Is                每一个value代表了一组共视,
+                                                               比如[0]的index就记录了这帧和另一帧观测到了哪一个关键帧，
+                                                               同时m_ik是另一帧在m_iLFsMatch里的索引
+        |__ vector<int>                    m_iI2zm             存疑
+                                                               存的是每组共视在m_izms索引的位置
+        |__ vector<ubyte>                  m_ms                存疑
+                                                               舒尔补时是否要更新的状态
+        |__ AlignedVector<float>           m_SmddsST           存疑
+                                                               LF,_LF这两帧所有共视的的子轨迹的∑ST_Huu^-1
+    |__ member func
+        |__ Run()            类的功能主体
+            |__ SynchronizeData() 
+            |__ for (iter<Max_Iter)
+                |__ UpdateFactors()
+                |__ UpdateSchurComplement()
+                |__ SolveSchurComplement()
+                |__ SolveBackSubstitution()
+                |__ SolveGradientDescent()
+                |__ SolveDogleg()
+                |__ UpdateStatesPropose()
+                |__ ComputeReduction()
+                |__ UpdateStatesDecide()
+                |__ EmbeddedPointIteration()
+                |__ BufferDataEmpty()
+            |__ UpdateData()
+        |__ SynchronizeData()
+            |__ 信息备份()      保存m_ILF1 到m_ILF2 依次类推
+            |__ IMU积分帧间信息、如果ILF位姿不靠谱，将积分出的结果赋值到ILF上
+            |__ 关键帧处理()
+                |__ 更新 KF 的MapPoint 的m_d    这里只使用了双目
+
+
+
+
+
+
+
